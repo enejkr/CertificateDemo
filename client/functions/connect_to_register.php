@@ -17,8 +17,8 @@ function connectToRegister(string $url, string $username): array
 
         CURLOPT_CAINFO => __DIR__ . '/../../certs/ca.crt',
 
-        CURLOPT_SSLCERT => __DIR__ . '/../../certs/clientC/client.crt',
-        CURLOPT_SSLKEY => __DIR__ . '/../../certs/clientC/client.key',
+        CURLOPT_SSLCERT => __DIR__ . '/../../certs/client/client.crt',
+        CURLOPT_SSLKEY => __DIR__ . '/../../certs/client/client.key',
     ]);
 
     $response = curl_exec($ch);
