@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 // included files 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/certificate.php';
-require_once __DIR__ . '/../functions/jwt.php';
+require_once __DIR__ . '/../classes/Jwt.php';
 require_once __DIR__ . '/../functions/refresh_token.php';
 
 ////////////// PREVERJANJE CERTIFIKATA \\\\\\\\\\\\\\\
@@ -26,7 +26,12 @@ if (!$user) {
 
 ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
 
-$accessToken = createAccessToken($user);
+$jwt = new Jwt(
+    __DIR__ . '/../keys/private.key',
+    __DIR__ . '/../keys/public.key'
+);
+
+$accessToken = $jwt->createAccessToken($user);
 
 ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
 
