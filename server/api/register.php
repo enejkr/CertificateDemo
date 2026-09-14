@@ -3,11 +3,14 @@
 header('Content-Type: application/json');
 
 //include
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../functions/certificate.php';
-require_once __DIR__ . '/../functions/jwt.php';
-require_once __DIR__ . '/../functions/refresh_token.php';
-require_once __DIR__ . "/../functions/log.php";
+require_once __DIR__ . '/../classes/Database.php';
+require_once __DIR__ . '/../classes/Certificate.php';
+
+
+$database = new Database();
+$pdo = $database->getConnection();
+
+$certificate = new Certificate($pdo);
 
 $username = $_POST['username'] ?? '';
 
@@ -20,9 +23,8 @@ if ($username === '') {
     exit;
 }
 
-$user = register($pdo, $username);
+$user = $certificate->register($username);
 
-costumeLog($user);
 
 // Registracija ni uspela
 if ($user === false) {

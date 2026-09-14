@@ -1,5 +1,5 @@
 <?php
-
+// HEADER.PAYLOAD.SIGNATURE 
 class Jwt
 {
     private string $privateKeyPath;
@@ -10,7 +10,9 @@ class Jwt
         $this->privateKeyPath = $privateKeyPath;
         $this->publicKeyPath = $publicKeyPath;
     }
-
+    // JWT uses a special base64url encode 
+    // function switches + for - and / for _ 
+    // and removes = 
     private function base64UrlEncode($data)
     {
         return rtrim(

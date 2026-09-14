@@ -3,14 +3,20 @@
 header('Content-Type: application/json');
 
 // included files 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../functions/certificate.php';
+require_once __DIR__ . '/../classes/Certificate.php';
 require_once __DIR__ . '/../classes/Jwt.php';
-require_once __DIR__ . '/../functions/refresh_token.php';
+require_once __DIR__ . '/../classes/RefreshToken.php';
+require_once __DIR__ . '/../classes/Database.php';
+
+$database = new Database();
+$pdo = $database->getConnection();
+
+$certificate = new Certificate($pdo);
+$refreshTokenService = new RefreshToken($pdo);
 
 ////////////// PREVERJANJE CERTIFIKATA \\\\\\\\\\\\\\\
 
-$user = verifyClientCertificate($pdo);
+$user = $certificate->verify();
 
 // Certifikat ni poznan
 if (!$user) {
@@ -35,7 +41,7 @@ $accessToken = $jwt->createAccessToken($user);
 
 ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
 
-$refreshToken = createRefreshToken($pdo, $user['id']);
+$refreshToken = $refreshTokenService->create($user['id']);
 
 // Certifikat je poznan
 echo json_encode([
