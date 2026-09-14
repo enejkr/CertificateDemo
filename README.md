@@ -333,3 +333,8 @@ JWT `private.key` mora ostati zaupen, saj se uporablja za podpisovanje JWT žeto
 Root CA `ca.key` mora prav tako ostati zaupen, saj omogoča podpisovanje novih certifikatov.
 
 Javni certifikati (`.crt`) in javni JWT ključ (`public.key`) se lahko uporabljajo za preverjanje podpisov in certifikatov.
+
+--- 
+# Baza podatkov 
+ 
+uvozi .sql datoteko v phpMyAdmin 
