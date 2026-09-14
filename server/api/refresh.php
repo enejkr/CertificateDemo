@@ -2,12 +2,21 @@
 header('Content-Type: application/json');
 
 //included files 
-require_once __DIR__ . "/../functions/refresh_token.php";
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . "/../functions/jwt.php";
+require_once __DIR__ . "/../classes/RefreshToken.php";
+require_once __DIR__ . '/../classes/Database.php';
+require_once __DIR__ . "/../classes/Jwt.php";
 require_once __DIR__ . "/../functions/helper.php";
 
+$database = new Database();
+$pdo = $database->getConnection();
+
 try {
+
+    $refreshTokenService = new RefreshToken($pdo);
+    $jwt = new Jwt(
+        __DIR__ . "/../keys/private.key",
+        __DIR__ . "/../keys/public.key"
+    );
 
     $refreshToken = extractToken();
 
@@ -22,7 +31,7 @@ try {
         exit;
     }
 
-    $data = verifyRefreshToken($pdo, $refreshToken);
+    $data = $refreshTokenService->verify($refreshToken);
 
     if (($data['is_valid'] ?? false) !== true) {
 
@@ -62,11 +71,10 @@ try {
     }
 
     ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
-    $newaccessToken = createAccessToken($user);
+    $newaccessToken = $jwt->createAccessToken($user);
     ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
 
-    $newRefreshToken = createRefreshToken(
-        $pdo,
+    $newRefreshToken = $refreshTokenService->create(
         $user['id']
     );
 
