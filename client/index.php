@@ -1,58 +1,88 @@
 <?php
-// includes 
-require_once __DIR__ . '/functions/connect_via_certificate.php';
-require_once __DIR__ . '/functions/token_helper.php';
-require_once __DIR__ . '/functions/connect_via_access_token.php';
-require_once __DIR__ . '/functions/connect_via_refresh_token.php';
-require_once __DIR__ . '/functions/connect_to_register.php';
 
-//used urls 
+require_once __DIR__ . '/classes/Client.php';
+require_once __DIR__ . '/functions/token_helper.php';
+
 $url = 'https://localhost:8443/api/login.php';
 $apiUrl = 'https://localhost:8443/api/api.php';
 $refreshUrl = 'https://localhost:8443/api/refresh.php';
 $registerUrl = 'https://localhost:8443/api/register.php';
 
+$client = new Client(
+    dirname(__DIR__) . '/certs/ca.crt',
+    dirname(__DIR__) . '/certs/client/client.crt',
+    dirname(__DIR__) . '/certs/client/client.key'
+);
+
 $message = '';
+
+function saveTokens(
+    string $accessToken,
+    string $refreshToken
+): void {
+    $accessExp = getExpFromToken($accessToken);
+
+    if ($accessExp === null) {
+        throw new Exception(
+            'Access token nima veljavnega expiration časa.'
+        );
+    }
+
+    $refreshExp = time() + (60 * 60 * 24 * 30);
+
+    tokenToCoockie(
+        'access_token',
+        $accessToken,
+        $accessExp
+    );
+
+    tokenToCoockie(
+        'refresh_token',
+        $refreshToken,
+        $refreshExp
+    );
+}
+
+function refreshTokens(
+    Client $client,
+    string $refreshUrl,
+    string $refreshToken
+): array {
+    if (empty($refreshToken)) {
+        throw new Exception('Refresh Token manjka.');
+    }
+
+    $result = $client->connectViaRefreshToken(
+        $refreshToken,
+        $refreshUrl
+    );
+
+    saveTokens(
+        $result['access_token'],
+        $result['refresh_token']
+    );
+
+    return $result;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        //certificate login    
+        //certificate login
         if (isset($_POST['connect'])) {
-            //gain access and refresh tokens    
-            $result = connectViaCertificate($url);
 
-            if (!is_array($result)) {
-                throw new Exception('Login ni vrnil veljavnega odgovora.');
-            }
+            //gain access and refresh tokens
+            $result = $client->connectViaCertificate($url);
 
-            if (
-                empty($result['access_token']) ||
-                empty($result['refresh_token'])
-            ) {
-                throw new Exception(
-                    $result['sporocilo'] ?? 'Access ali refresh token manjka.'
-                );
-            }
-
-            //tokens    
-            $accessToken = $result['access_token'];
-            $accessExp = getExpFromToken($accessToken);
-
-            if ($accessExp === null) {
-                throw new Exception('Access token nima veljavnega expiration časa.');
-            }
-
-            $refreshToken = $result['refresh_token'];
-            $refreshExp = time() + (60 * 60 * 24 * 30);
-
-            //storing then in a secure cookie    
-            tokenToCoockie('access_token', $accessToken, $accessExp);
-            tokenToCoockie('refresh_token', $refreshToken, $refreshExp);
+            //tokens
+            saveTokens(
+                $result['access_token'],
+                $result['refresh_token']
+            );
 
             $message = 'Uspesna povezava.';
         }
-        // REWRITE NEEDED 
-        // access and refresh token api usage    
+
+        // access and refresh token api usage
         if (isset($_POST['access_token'])) {
 
             $accessToken = $_COOKIE['access_token'] ?? null;
@@ -64,68 +94,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('bouth Token missing');
                 }
 
-                $result = connectViaRefreshToken(
-                    $refreshToken,
-                    $refreshUrl
+                $result = refreshTokens(
+                    $client,
+                    $refreshUrl,
+                    $refreshToken
                 );
 
                 $accessToken = $result['access_token'];
                 $refreshToken = $result['refresh_token'];
-
-                $accessExp = getExpFromToken($accessToken);
-
-                if ($accessExp === null) {
-                    throw new Exception('Access token nima veljavnega expiration časa.');
-                }
-
-                $refreshExp = time() + (60 * 60 * 24 * 30);
-
-                //seting secure cookie    
-                tokenToCoockie('access_token', $accessToken, $accessExp);
-                tokenToCoockie('refresh_token', $refreshToken, $refreshExp);
-
-                // loop araund and using new access token
-                $response = connectViaAccessToken($accessToken, $apiUrl);
-
-            } else {
-
-                $response = connectViaAccessToken($accessToken, $apiUrl);
             }
 
-            // access token expired trying refresh token  
-            if ($response['refresh_token_needed'] ?? false) {
-
-                if (empty($refreshToken)) {
-                    throw new Exception('Refresh Token manjka.');
-                }
-
-                $result = connectViaRefreshToken(
-                    $refreshToken,
-                    $refreshUrl
-                );
-
-                $accessToken = $result['access_token'];
-                $refreshToken = $result['refresh_token'];
-
-                $accessExp = getExpFromToken($accessToken);
-
-                if ($accessExp === null) {
-                    throw new Exception('Access token nima veljavnega expiration časa.');
-                }
-
-                $refreshExp = time() + (60 * 60 * 24 * 30);
-
-                //seting secure cookie    
-                tokenToCoockie('access_token', $accessToken, $accessExp);
-                tokenToCoockie('refresh_token', $refreshToken, $refreshExp);
-
-                // loop araund and using new access token
-                $response = connectViaAccessToken($accessToken, $apiUrl);
-            }
+            $response = $client->connectViaAccessToken(
+                $accessToken,
+                $apiUrl
+            );
+            
 
             $message = json_encode(
                 $response,
-                JSON_PRETTY_PRINT
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
             );
         }
 
@@ -137,7 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Username manjka.');
             }
 
-            $response = connectToRegister($registerUrl, $username);
+            $response = $client->connectToRegister(
+                $registerUrl,
+                $username
+            );
 
             $message = json_encode(
                 $response,
@@ -173,25 +163,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Poveži se z Access Tokenom
             </button>
 
-            <input type="hidden" name="username" id="username">
+            <input
+                type="hidden"
+                name="username"
+                id="username"
+            >
 
-            <button type="submit" name="register" onclick="return registerUser()">
+            <button
+                type="submit"
+                name="register"
+                onclick="return registerUser()"
+            >
                 register
             </button>
+
         </form>
 
-        <pre><?php echo htmlspecialchars($message);?></pre> <br>
-        <p> trenuten cas: <?php echo time() ?>  </p>
+        <pre><?php echo htmlspecialchars($message); ?></pre>
+
+        <br>
+
+        <p>
+            trenuten cas: <?php echo time(); ?>
+        </p>
 
         <script>
             function registerUser() {
                 const username = prompt('Vnesi username:');
 
-                if (username === null || username.trim() === '') {
+                if (
+                    username === null ||
+                    username.trim() === ''
+                ) {
                     return false;
                 }
 
-                document.getElementById('username').value = username.trim();
+                document.getElementById('username').value =
+                    username.trim();
 
                 return true;
             }
