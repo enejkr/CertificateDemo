@@ -1,40 +1,41 @@
 <?php
-//includes 
+
 require_once __DIR__ . "/../classes/Jwt.php";
 require_once __DIR__ . "/../functions/helper.php";
 require_once __DIR__ . "/../../costume_log.php";
 
-// keys
 $publicKeyPath = __DIR__ . "/../keys/public.key";
 
 header('Content-Type: application/json');
 
-$accessToken = extractToken();
-
-$jwt = new Jwt(
-    __DIR__ . "/../keys/private.key",
-    $publicKeyPath
-);
-
-//try catch for errors especially to catch expired jwt
 try {
+    $accessToken = extractToken();
+
+    $jwt = new Jwt(
+        __DIR__ . "/../keys/private.key",
+        $publicKeyPath
+    );
+
     $data = $jwt->verifyJwt($accessToken);
+
     customLog($data);
-}
-catch (Exception $e){
-    $message = 'NAPAKA: ' . $e->getMessage();
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Uspešno povezan na API',
+        'access_token' => $data
+    ]);
+
+} catch (Exception $e) {
+
+    customLog($e->getMessage());
+
+    http_response_code(401);
 
     echo json_encode([
         'success' => false,
-        'massage' => "$message",
+        'sporocilo' => 'Neveljaven access token.'
     ]);
-    
-    exit();
-}
 
-// check if token valid 
-echo json_encode([
-    'success' => true,
-    'massage' => "uspesno povezal na api",
-    'access_token' => $data
-]);
+    exit;
+}

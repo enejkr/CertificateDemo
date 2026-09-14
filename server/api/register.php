@@ -2,56 +2,44 @@
 
 header('Content-Type: application/json');
 
-//include
 require_once __DIR__ . '/../classes/Database.php';
 require_once __DIR__ . '/../classes/Certificate.php';
 
+try {
 
-$database = new Database();
-$pdo = $database->getConnection();
+    $database = new Database();
+    $pdo = $database->getConnection();
 
-$certificate = new Certificate($pdo);
+    $certificate = new Certificate($pdo);
 
-$username = $_POST['username'] ?? '';
+    $username = $_POST['username'] ?? '';
 
-if ($username === '') {
+    if ($username === '') {
+        throw new Exception('Username manjka.');
+    }
+
+    $user = $certificate->register($username);
+
+    if (isset($user['error'])) {
+        throw new Exception($user['message'] ?? 'Registracija neuspešna.');
+    }
+
+    echo json_encode([
+        'success' => true,
+        'sporocilo' => 'Registracija uspešna.',
+        'user_id' => $user['id']
+    ]);
+
+} catch (Exception $e) {
+
+    error_log($e->getMessage());
+
+    http_response_code(400);
+
     echo json_encode([
         'success' => false,
-        'sporocilo' => 'Username manjka.'
+        'sporocilo' => $e->getMessage()
     ]);
 
     exit;
 }
-
-$user = $certificate->register($username);
-
-
-// Registracija ni uspela
-if ($user === false) {
-    echo json_encode([
-        'success' => false,
-        'sporocilo' => 'Registracija neuspesna.'
-    ]);
-
-    exit;
-}
-
-// Napaka
-if (isset($user['error'])) {
-    echo json_encode([
-        'success' => false,
-        'sporocilo' => $user['message'] ?? 'Registracija neuspesna.',
-        'error' => $user['error']
-    ]);
-
-    exit;
-}
-
-// Uspešna registracija
-echo json_encode([
-    'success' => true,
-    'sporocilo' => 'Registracija uspesna.',
-    'user_id' => $user['id']
-]);
-
-exit;

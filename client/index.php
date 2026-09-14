@@ -16,55 +16,6 @@ $client = new Client(
 
 $message = '';
 
-function saveTokens(
-    string $accessToken,
-    string $refreshToken
-): void {
-    $accessExp = getExpFromToken($accessToken);
-
-    if ($accessExp === null) {
-        throw new Exception(
-            'Access token nima veljavnega expiration časa.'
-        );
-    }
-
-    $refreshExp = time() + (60 * 60 * 24 * 30);
-
-    tokenToCoockie(
-        'access_token',
-        $accessToken,
-        $accessExp
-    );
-
-    tokenToCoockie(
-        'refresh_token',
-        $refreshToken,
-        $refreshExp
-    );
-}
-
-function refreshTokens(
-    Client $client,
-    string $refreshUrl,
-    string $refreshToken
-): array {
-    if (empty($refreshToken)) {
-        throw new Exception('Refresh Token manjka.');
-    }
-
-    $result = $client->connectViaRefreshToken(
-        $refreshToken,
-        $refreshUrl
-    );
-
-    saveTokens(
-        $result['access_token'],
-        $result['refresh_token']
-    );
-
-    return $result;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         //certificate login
@@ -88,10 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $accessToken = $_COOKIE['access_token'] ?? null;
             $refreshToken = $_COOKIE['refresh_token'] ?? null;
 
-            if (empty($accessToken)) {
+            if (
+                empty($accessToken) ||
+                isTokenExpired($accessToken)
+            ) {
 
                 if (empty($refreshToken)) {
-                    throw new Exception('bouth Token missing');
+                    throw new Exception('Refresh token manjka.');
                 }
 
                 $result = refreshTokens(
@@ -101,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
 
                 $accessToken = $result['access_token'];
-                $refreshToken = $result['refresh_token'];
             }
 
             $response = $client->connectViaAccessToken(
@@ -135,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         $message = 'NAPAKA: ' . $e->getMessage();
     }
 }

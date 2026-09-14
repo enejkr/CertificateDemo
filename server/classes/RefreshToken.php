@@ -32,6 +32,7 @@ class RefreshToken
         //30 days 
         $expiresAt = date(
             'Y-m-d H:i:s',
+            //time() + 22
             time() + 60 * 60 * 24 * 30
         );
 
@@ -70,22 +71,25 @@ class RefreshToken
 
         // is not in db 
         if ($result === false) {
-            return [
-                'is_valid' => false
-            ];
+            throw new Exception ("refresh token is not in database");
         }
         // is revoked 
         if ($result['revoked_at'] !== null) {
-            return [
-                'is_valid' => false
-            ];
+            throw new Exception ("refresh token is revoked");
         }
         // is expierd 
-        if (strtotime($result['expires_at']) <= time()) {
-            return [
-                'is_valid' => false
-            ];
+        $expiresAt = strtotime($result['expires_at']);
+
+        if ($expiresAt === false) {
+            throw new Exception('Invalid refresh token expiration date');
         }
+
+        if ($expiresAt <= time()) {
+            throw new Exception(
+                "Refresh token expired at {$result['expires_at']}"
+            );
+        }
+
 
         return [
             'is_valid' => true,

@@ -133,8 +133,22 @@ class Jwt
         }
 
         // Preveri expiration
-        if (isset($payloadData['exp']) && time() >= $payloadData['exp']) {
+        if (!isset($payloadData['exp'])) {
+            throw new Exception('JWT nima expiration časa.');
+        }
+
+        if (time() >= $payloadData['exp']) {
             throw new Exception('JWT je potekel.');
+        }
+        if (
+            !isset(
+                $payloadData['sub'],
+                $payloadData['username'],
+                $payloadData['iat'],
+                $payloadData['exp']
+            )
+        ) {
+            throw new Exception('JWT payload nima obveznih podatkov.');
         }
 
         return $payloadData;

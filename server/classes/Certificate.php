@@ -14,13 +14,13 @@ class Certificate
         $verify = $_SERVER['SSL_CLIENT_VERIFY'] ?? '';
 
         if ($verify !== 'SUCCESS') {
-            return false;
+            throw new Exception ("verification failed");
         }
 
         $clientCertificate = $_SERVER['SSL_CLIENT_CERT'] ?? '';
 
         if ($clientCertificate === '') {
-            return false;
+            throw new Exception ("client certificate empty");
         }
 
         $certificate = str_replace(
@@ -39,7 +39,7 @@ class Certificate
         $certificateDer = base64_decode($certificate, true);
 
         if ($certificateDer === false) {
-            return false;
+            throw new Exception ("certificate could not decode");
         }
 
         return strtoupper(hash('sha256', $certificateDer));
@@ -48,10 +48,6 @@ class Certificate
     public function verify()
     {
         $fingerprint = $this->getClientCertificateFingerprint();
-
-        if ($fingerprint === false) {
-            return false;
-        }
 
         $stmt = $this->pdo->prepare("
             SELECT id, username
@@ -65,7 +61,7 @@ class Certificate
         $user = $stmt->fetch();
 
         if (!$user) {
-            return false;
+           throw new Exception ("user not in Database");
         }
 
         return [
@@ -78,13 +74,6 @@ class Certificate
     public function register($username)
     {
         $fingerprint = $this->getClientCertificateFingerprint();
-
-        if ($fingerprint === false) {
-            return [
-                'error' => 'certificate',
-                'message' => 'Certifikata ni mogoče pridobiti.'
-            ];
-        }
 
         $stmt = $this->pdo->prepare("
             INSERT INTO users (username, certificate_fingerprint)
