@@ -309,7 +309,7 @@ Nato zaženi **Apache** in **MySQL** preko XAMPP.
 Projekt je nato dostopen preko:
 
 ```text
-http://localhost/demo/
+http://localhost/demo/client/
 ```
 
 ## Zahteve
