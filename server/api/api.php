@@ -34,7 +34,7 @@ try {
 
     echo json_encode([
         'success' => false,
-        'sporocilo' => 'Neveljaven access token.'
+        'sporocilo' => $e,
     ]);
 
     exit;

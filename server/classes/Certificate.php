@@ -70,41 +70,5 @@ class Certificate
             'fingerprint' => $fingerprint
         ];
     }
-    // ob registraciji vstavi uporabnika in poveže fingerprint z username 
-    public function register($username)
-    {
-        $fingerprint = $this->getClientCertificateFingerprint();
-
-        $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, certificate_fingerprint)
-            VALUES (?, ?)
-        ");
-
-        try {
-            $stmt->execute([$username, $fingerprint]);
-        } catch (PDOException $e) {
-
-            if (
-                $e->getCode() === '23000' &&
-                isset($e->errorInfo[1]) &&
-                (int)$e->errorInfo[1] === 1062
-            ) {
-                return [
-                    'error' => 'duplicate',
-                    'message' => 'Ta certifikat je že registriran.'
-                ];
-            }
-
-            return [
-                'error' => 'database',
-                'message' => 'Napaka podatkovne baze.'
-            ];
-        }
-
-        return [
-            'id' => $this->pdo->lastInsertId(),
-            'username' => $username,
-            'fingerprint' => $fingerprint
-        ];
-    }
+  
 }

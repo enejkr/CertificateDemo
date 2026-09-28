@@ -87,28 +87,6 @@ class Client
         return $data;
     }
 
-    function connectToRegister(
-        string $url,
-        string $username
-    ): array {
-        $this->Username = $username;
-
-        return $this->executeCurl(
-            $url,
-            [
-                CURLOPT_POST => true,
-
-                CURLOPT_POSTFIELDS => http_build_query([
-                    'username' => $username
-                ]),
-
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/x-www-form-urlencoded',
-                    'Accept: application/json'
-                ],
-            ]
-        );
-    }
 
     function connectViaAccessToken(
         string $accessToken,
