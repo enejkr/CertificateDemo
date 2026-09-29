@@ -1,5 +1,5 @@
 <?php
-
+require_once __DIR__ . "/../../costume_log.php";
 class Certificate
 {
     private PDO $pdo;
@@ -23,32 +23,13 @@ class Certificate
             throw new Exception ("client certificate empty");
         }
 
-        $certificate = str_replace(
-            [
-                '-----BEGIN CERTIFICATE-----',
-                '-----END CERTIFICATE-----',
-                "\r",
-                "\n",
-                " ",
-                "\t"
-            ],
-            '',
-            $clientCertificate
-        );
-
-        $certificateDer = base64_decode($certificate, true);
-
-        if ($certificateDer === false) {
-            throw new Exception ("certificate could not decode");
-        }
-
-        return strtoupper(hash('sha256', $certificateDer));
+        return openssl_x509_fingerprint($clientCertificate, "sha256"); ; 
     }
     // returns a user name, id and fingerprit of a connecterd user 
     public function verify()
     {
         $fingerprint = $this->getClientCertificateFingerprint();
-
+        customLog($fingerprint);
         $stmt = $this->pdo->prepare("
             SELECT id, username
             FROM users

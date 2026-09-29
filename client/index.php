@@ -9,8 +9,8 @@ $refreshUrl = 'https://localhost:8443/api/refresh.php';
 
 $client = new Client(
     dirname(__DIR__) . '/certs/ca.crt',
-    dirname(__DIR__) . '/certs/test2/client.crt',
-    dirname(__DIR__) . '/certs/test2/client.key'
+    dirname(__DIR__) . '/certs/Enej1/client.crt',
+    dirname(__DIR__) . '/certs/Enej1/client.key'
 );
 
 $message = '';

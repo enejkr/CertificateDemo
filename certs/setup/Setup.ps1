@@ -27,12 +27,12 @@ New-Item -ItemType Directory -Force -Path $dir | Out-Null
     -days 825 `
     -sha256
 
-# Fingerprint
-$fingerprint = (.\openssl.exe x509 `
+# Fingerprint - ToLower needed beacuse default fingerprint php function returns lower charecters 
+$fingerprint = ((.\openssl.exe x509 `
     -in "$dir\client.crt" `
     -noout `
     -fingerprint `
-    -sha256) -replace 'SHA256 Fingerprint=', '' -replace ':', ''
+    -sha256) -replace 'SHA256 Fingerprint=', '' -replace ':', '').ToLower()
 
 # Vstavi v bazo
 $sql = "INSERT INTO users (username, certificate_fingerprint) VALUES ('$n', '$fingerprint');"
