@@ -21,7 +21,8 @@ class Client
 
     private function executeCurl(
         string $url,
-        array $options = []
+        array $options = [],
+        bool $useClientCertificate = false
     ): array {
         $ch = curl_init($url);
 
@@ -34,11 +35,13 @@ class Client
 
             CURLOPT_CAINFO => $this->CaCrtPath,
 
-            CURLOPT_SSLCERT => $this->ClientCrtPath,
-            CURLOPT_SSLKEY => $this->ClientKeyPath,
-
             CURLOPT_TIMEOUT => 10,
         ];
+
+        if ($useClientCertificate) {
+            $defaultOptions[CURLOPT_SSLCERT] = $this->ClientCrtPath;
+            $defaultOptions[CURLOPT_SSLKEY] = $this->ClientKeyPath;
+        }
 
         curl_setopt_array(
             $ch,
@@ -87,7 +90,8 @@ class Client
         return $data;
     }
 
-
+    // connects to an api 
+    // dose not youse a certificate 
     function connectViaAccessToken(
         string $accessToken,
         string $url
@@ -104,6 +108,7 @@ class Client
     }
 
     // returns new access and new refreash tokens
+    //dise not send a certificate
     function connectViaRefreshToken(
         string $refreshToken,
         string $url
@@ -145,7 +150,8 @@ class Client
                 CURLOPT_HTTPHEADER => [
                     'Accept: application/json'
                 ],
-            ]
+            ],
+            true
         );
 
         if (

@@ -12,131 +12,174 @@ Demo PHP projekta za prikaz avtentikacije z digitalnimi certifikati, mTLS in JWT
 
 ---
 
-# Demo mTLS
+# API arhitektura
 
-## Uporaba OpenSSL kreiranja certifikatov
+API je razdeljen na **mTLS del za prijavo** in **navaden HTTPS API za delo z access tokenom**.
 
-Vsi ukazi so izvedeni v **PowerShell**.
+## 1. mTLS prijava
 
-Spremenljivka, uporabljena v samih ukazih:
-
-```powershell
-$c = 'C:\xampp\htdocs\demo\certs'
-```
-
-Najprej nastavimo delovno mapo OpenSSL:
-
-```powershell
-Set-Location 'C:\xampp\apache\bin'
-```
-
-Nastavimo tudi OpenSSL konfiguracijsko datoteko:
-
-```powershell
-$env:OPENSSL_CONF = 'C:\xampp\apache\conf\openssl.cnf'
-```
-
-## 1. Ustvarjanje Root CA
-
-```powershell
-.\openssl.exe req -x509 -newkey rsa:2048 -sha256 -nodes -days 3650 -keyout "$c\ca.key" -out "$c\ca.crt" -subj "/CN=MTLS Demo Root CA"
-```
-
-Ta ukaz ustvari root CA certifikat in njegov ključ, ki bosta uporabljeni pri podpisovanju drugih certifikatov.
-
-Ustvarjeni datoteki:
+Za začetno prijavo se uporablja client certifikat:
 
 ```text
-ca.key
-ca.crt
+POST /mtls-api/login.php
+        |
+        | Client Certificate
+        v
+   preverjanje
+        |
+        v
+   access_token
+   refresh_token
 ```
 
-## 2. Ustvarjanje server ključa in CSR
+Client certifikat se uporabi za preverjanje identitete klienta. Po uspešni prijavi strežnik vrne access in refresh token.
 
-```powershell
-.\openssl.exe req -newkey rsa:2048 -sha256 -nodes -keyout "$c\server\server.key" -out "$c\server\server.csr" -subj "/CN=localhost"
-```
+## 2. Refresh token
 
-Ukaz ustvari ključ in nepodpisan certifikat, ki ju še more podpisati CA.
-
-Ustvarjeni datoteki:
+Refresh endpoint 
 
 ```text
-server.key
-server.csr
+POST /api/refresh.php
+        |
+        | Authorization:
+        | Bearer <refresh_token>
+        v
+    preverjanje
+        |
+        v
+     novi Refresh Token
+     novi Access Token
 ```
 
-## 3. Ustvarjanje client ključa in CSR
+Če je `refresh.php` znotraj `/api`, client ne potrebuje pošiljati certificata 
 
-```powershell
-.\openssl.exe req -newkey rsa:2048 -sha256 -nodes -keyout "$c\client\client.key" -out "$c\client\client.csr" -subj "/CN=mtls-klient"
-```
+## 3. Navaden HTTPS API
 
-Ukaz ustvari ključ in nepodpisan certifikat, ki ju še more podpisati CA.
-
-Ustvarjeni datoteki:
+Dejanske API zahteve uporabljajo access token:
 
 ```text
-client.key
-client.csr
+POST /api/api.php
+        |
+        | Authorization:
+        | Bearer <access_token>
+        v
+       API
 ```
 
-## 4. Podpis server certifikata
+Ta endpoint ne zahteva client certifikata.
 
-```powershell
-.\openssl.exe x509 -req -in "$c\server\server.csr" -CA "$c\ca.crt" -CAkey "$c\ca.key" -CAcreateserial -out "$c\server\server.crt" -days 825 -sha256
+Celotna arhitektura:
+
+```text
+                         CLIENT
+                           |
+              +------------+------------+
+              |                         |
+              v                         v
+      /mtls-api/login.php         /api/api.php
+              |                         |
+       Client Certificate          Access Token
+              |                         |
+              v                         v
+        Access Token                API
+        Refresh Token
 ```
 
-## 5. Podpis client certifikata
-
-```powershell
-.\openssl.exe x509 -req -in "$c\client\client.csr" -CA "$c\ca.crt" -CAkey "$c\ca.key" -CAcreateserial -out "$c\client\client.crt" -days 825 -sha256
-```
-
-Ukaz podpiše nepodpisan certifikat serverja in clienta z ključem in certifikatom root CA.
+Client PHP koda zato client certifikat uporablja pri mTLS prijavi. Pri zahtevah z access tokenom se certifikat ne pošilja.
 
 ---
 
-# Proces pridobivanja certifikata
+# Demo mTLS
 
-Proces pridobivanja certifikatov poteka v več korakih.
+## Proces certifikatne avtentikacije
 
-Najprej se ustvari **Root CA**, ki predstavlja zaupanja vredno certifikacijsko avtoriteto.
-
-Nato server in client ustvarita vsak svoj zasebni ključ in CSR. CSR predstavlja zahtevo za izdajo certifikata in še ni podpisan.
-
-Root CA nato s svojim zasebnim ključem podpiše CSR serverja in clienta. Tako dobimo veljavna certifikata, ki ju je izdal isti Root CA.
-
-Proces:
+Root CA podpiše certifikata serverja in klienta:
 
 ```text
                     Root CA
-                 ca.key / ca.crt
-                      |
-             +--------+--------+
-             |                 |
-             v                 v
-        Server CSR         Client CSR
-        server.csr         client.csr
-             |                 |
-             v                 v
-       server.crt          client.crt
+                       |
+             +---------+---------+
+             |                   |
+             v                   v
+        Server CSR          Client CSR
+             |                   |
+             v                   v
+        server.crt           client.crt
 ```
 
-Pri mTLS se server in client med vzpostavitvijo povezave medsebojno preverjata s pomočjo certifikatov.
-
-Server preveri clientov certifikat, client pa lahko preveri serverjev certifikat. Oba morata zaupati istemu Root CA oziroma ustrezni certifikacijski verigi.
+Pri mTLS server preveri clientov certifikat, client pa lahko preveri serverjev certifikat.
 
 ---
 
-# Pridobljene datoteke
+# Apache HTTPS in mTLS
+
+Apache uporablja HTTPS `VirtualHost` na portu `8443`.
+
+Konfiguracija:
+
+```apache
+<VirtualHost *:8443>
+    ServerName localhost
+    DocumentRoot "C:/xampp/htdocs/demo/server"
+
+    SSLEngine on
+
+    SSLCertificateFile      "C:/xampp/htdocs/demo/certs/server/server.crt"
+    SSLCertificateKeyFile   "C:/xampp/htdocs/demo/certs/server/server.key"
+    SSLCACertificateFile    "C:/xampp/htdocs/demo/certs/ca.crt"
+
+    SSLVerifyClient none
+
+    SSLOptions +StdEnvVars +ExportCertData
+
+    <Location "/mtls-api">
+        SSLVerifyClient require
+        SSLVerifyDepth 2
+    </Location>
+</VirtualHost>
+```
+
+`SSLVerifyClient require` ni nastavljen za celoten `VirtualHost`.
+
+Privzeto je:
+
+```apache
+SSLVerifyClient none
+```
+
+mTLS pa je zahtevan samo za:
+
+```apache
+<Location "/mtls-api">
+    SSLVerifyClient require
+    SSLVerifyDepth 2
+</Location>
+```
+
+Tako isti HTTPS strežnik uporablja oba načina povezave:
+
+```text
+https://localhost:8443/mtls-api/...
+        ↓
+   HTTPS + mTLS
+
+
+https://localhost:8443/api/...
+        ↓
+   HTTPS + Bearer token
+```
+
+---
+
+# Certifikati
+
+Projekt uporablja certifikate za vzpostavitev HTTPS in mTLS povezave.
 
 ## Server
 
 ```text
 server/
 ├── server.key
-├── server.csr
 └── server.crt
 ```
 
@@ -145,7 +188,6 @@ server/
 ```text
 client/
 ├── client.key
-├── client.csr
 └── client.crt
 ```
 
@@ -153,107 +195,61 @@ client/
 
 ```text
 ca.key
-ca.srl
 ca.crt
 ```
 
----
-
-# Pomen datotek
-
-| Datoteka | Opis |
-|---|---|
-| `.key` | vsebuje zasebni ključ |
-| `.csr` | zahteva za certifikat oziroma "nepodpisan certifikat" |
-| `.crt` | izdan/podpisan certifikat |
-| `ca.key` | zasebni ključ Root CA |
-| `ca.crt` | javni certifikat Root CA |
-| `.srl` | serijska datoteka, ki hrani naslednjo serijsko številko certifikata |
+Root CA se uporablja za preverjanje certifikatov serverja in klienta.
 
 ---
 
-# Uporabljeni OpenSSL parametri
+# Ustvarjanje dodatnega mTLS uporabnika
 
-| Parameter | Pomen |
-|---|---|
-| `req` | delo z zahtevami za certifikat |
-| `-x509` | ustvari X.509 certifikat |
-| `-newkey rsa:2048` | ustvari nov RSA ključ dolžine 2048 bitov |
-| `-sha256` | uporablja SHA-256 |
-| `-nodes` | zasebni ključ ni zaščiten z geslom |
-| `-days 3650` | veljavnost certifikata 3650 dni |
-| `-days 825` | veljavnost certifikata 825 dni |
-| `-keyout` | določi izhodno datoteko zasebnega ključa |
-| `-out` | določi izhodno datoteko |
-| `-subj` | določi podatke certifikata |
-| `-CA` | določi CA certifikat |
-| `-CAkey` | določi zasebni ključ CA |
-| `-CAcreateserial` | ustvari serijsko datoteko CA |
-| `-in` | določi vhodno datoteko |
-| `-CN` | Common Name certifikata |
+Za dodajanje novega uporabnika se uporablja PowerShell skripta, ki kot parameter prejme uporabniško ime.
 
----
+Primer:
 
-# JWT ključi
+```powershell
+.\create-client.ps1 -n janez
+```
 
-Projekt uporablja tudi RSA ključa za podpisovanje in preverjanje JWT žetonov.
+Skripta:
 
-JWT uporablja:
+1. ustvari posebno mapo za uporabnika,
+2. ustvari client certifikat,
+3. izračuna SHA-256 fingerprint certifikata,
+4. vnese uporabnika in fingerprint v tabelo `users`,
+5. izpiše podatke o ustvarjenem uporabniku.
+
+Za uporabnika se ustvari:
 
 ```text
-private.key
-public.key
+certs/
+└── janez/
+    ├── client.key
+    ├── client.csr
+    └── client.crt
 ```
 
-Zasebni ključ se uporablja za **podpis JWT**, javni ključ pa za **preverjanje podpisa**.
-
-## Ustvarjanje JWT ključev
-
-V PowerShellu se najprej premaknemo v mapo OpenSSL:
-
-```powershell
-Set-Location 'C:\xampp\apache\bin'
-```
-
-Določimo mapo, kamor bomo shranili JWT ključe:
-
-```powershell
-$jwt = 'C:\xampp\htdocs\demo\server\keys'
-```
-
-## 1. Ustvarjanje zasebnega ključa
-
-```powershell
-.\openssl.exe genrsa -out "$jwt\private.key" 2048
-```
-
-Ta ukaz ustvari RSA zasebni ključ dolžine 2048 bitov.
-
-Rezultat:
-
-```text
-server/keys/private.key
-```
-
-## 2. Ustvarjanje javnega ključa
-
-```powershell
-.\openssl.exe rsa -in "$jwt\private.key" -pubout -out "$jwt\public.key"
-```
-
-Javni ključ se izpelje iz zasebnega ključa.
-
-Rezultat:
-
-```text
-server/keys/public.key
-```
+Fingerprint predstavlja SHA-256 identifikator client certifikata in se shrani v podatkovno bazo skupaj z uporabniškim imenom.
 
 ---
 
-# Proces JWT avtentikacije
+# JWT
 
-Pri izdaji JWT se podatki podpišejo z zasebnim ključem.
+Projekt uporablja JWT žetone za avtentikacijo zahtev do API-ja.
+
+Uporabljata se:
+
+```text
+server/
+└── keys/
+    ├── private.key
+    └── public.key
+```
+
+Zasebni ključ se uporablja za podpis JWT žetonov, javni ključ pa za preverjanje podpisa.
+
+## Proces JWT avtentikacije
 
 ```text
 private.key
@@ -263,36 +259,18 @@ podpis podatkov
      |
      v
 JWT token
-```
-
-Ko strežnik prejme JWT, lahko njegov podpis preveri z javnim ključem.
-
-```text
-JWT
- |
- v
+     |
+     v
+API
+     |
+     v
 public.key
- |
- v
+     |
+     v
 preverjanje podpisa
- |
- +----> veljaven
- |
- +----> neveljaven
 ```
 
-Zasebni ključ mora zato ostati zaupen, medtem ko se javni ključ lahko uporablja za preverjanje podpisov.
-
----
-
-# Struktura JWT ključev
-
-```text
-server/
-└── keys/
-    ├── private.key
-    └── public.key
-```
+Zasebni ključ mora ostati zaupen.
 
 ---
 
@@ -304,12 +282,21 @@ Projekt kopiraj v:
 C:\xampp\htdocs\demo
 ```
 
-Nato zaženi **Apache** in **MySQL** preko XAMPP.
+Nato preko XAMPP zaženi:
 
-Projekt je nato dostopen preko:
+- Apache
+- MySQL
+
+Client je dostopen preko:
 
 ```text
 http://localhost/demo/client/
+```
+
+HTTPS API uporablja:
+
+```text
+https://localhost:8443/
 ```
 
 ## Zahteve
@@ -318,23 +305,32 @@ http://localhost/demo/client/
 - Apache
 - PHP
 - MySQL
-- OpenSSL
+
+oziroma samo XAMPP saj vse ostalo pride zraven XAMPP inštalacije
+
+---
+
+# Baza podatkov
+
+SQL datoteko uvozi v **phpMyAdmin**.
+
+Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
 
 ---
 
 # Varnost
 
-Datoteke z zasebnimi ključi (`.key`) vsebujejo občutljive podatke in jih v produkcijskem okolju ne smemo javno objavljati.
+Zasebni ključi (`.key`) ne smejo biti javno objavljeni.
 
-Prav tako je priporočljivo, da se razvojni certifikati in zasebni ključi ne uporabljajo v produkciji.
+Posebej zaščiteni morajo biti:
 
-JWT `private.key` mora ostati zaupen, saj se uporablja za podpisovanje JWT žetonov.
+```text
+ca.key
+server.key
+client.key
+server/keys/private.key
+```
 
-Root CA `ca.key` mora prav tako ostati zaupen, saj omogoča podpisovanje novih certifikatov.
+`ca.key` omogoča podpisovanje novih certifikatov, `private.key` pa podpisovanje JWT žetonov.
 
-Javni certifikati (`.crt`) in javni JWT ključ (`public.key`) se lahko uporabljajo za preverjanje podpisov in certifikatov.
-
---- 
-# Baza podatkov 
- 
-uvozi .sql datoteko v phpMyAdmin 
+Razvojnih certifikatov in ključev ne uporabljaj v produkciji.
