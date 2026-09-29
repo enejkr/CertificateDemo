@@ -29,7 +29,9 @@ class Certificate
     public function verify()
     {
         $fingerprint = $this->getClientCertificateFingerprint();
+        
         customLog($fingerprint);
+
         $stmt = $this->pdo->prepare("
             SELECT id, username
             FROM users

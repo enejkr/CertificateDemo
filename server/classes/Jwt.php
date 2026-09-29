@@ -4,11 +4,19 @@ class Jwt
 {
     private string $privateKeyPath;
     private string $publicKeyPath;
+    private string $algorithm;
+    private int $expiresIn;
 
-    public function __construct(string $privateKeyPath, string $publicKeyPath)
-    {
+    public function __construct(
+        string $privateKeyPath,
+        string $publicKeyPath,
+        array $config
+    ) {
         $this->privateKeyPath = $privateKeyPath;
         $this->publicKeyPath = $publicKeyPath;
+
+        $this->algorithm = $config['algorithm'];
+        $this->expiresIn = (int)$config['expires_in'];
     }
     // JWT uses a special base64url encode 
     // function switches + for - and / for _ 
@@ -22,10 +30,10 @@ class Jwt
     }
 
     // for a user creates accesToken 
-    public function createAccessToken($user, $expiresIn = 20)
+    public function createAccessToken($user)
     {
         $header = [
-            'alg' => 'RS256',
+            'alg' => $this->algorithm,
             'typ' => 'JWT'
         ];
 
@@ -33,7 +41,7 @@ class Jwt
             'sub' => (string)$user['id'],
             'username' => $user['username'],
             'iat' => time(),
-            'exp' => time() + $expiresIn
+            'exp' => time() + $this->expiresIn
         ];
 
         $headerEncoded = $this->base64UrlEncode(

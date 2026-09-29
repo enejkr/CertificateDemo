@@ -6,10 +6,19 @@ class Database
 
     public function __construct()
     {
-        $host = 'localhost';
-        $db = 'mtls_demo';
-        $user = 'root';
-        $pass = '';
+        $config = parse_ini_file(
+            __DIR__ . '/../config/server.ini',
+            true
+        );
+
+        if ($config === false) {
+            throw new RuntimeException('Unable to load server.ini');
+        }
+
+        $host = $config['database']['db_host'];
+        $db   = $config['database']['db_name'];
+        $user = $config['database']['db_user'];
+        $pass = $config['database']['db_password'];
 
         $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
 
