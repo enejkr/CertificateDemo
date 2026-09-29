@@ -1,0 +1,23 @@
+RewriteEngine On
+
+# ============================================================
+# mTLS API
+# ============================================================
+
+RewriteRule ^auth/login$ api/mtls/v1/login.php [L]
+
+
+# ============================================================
+# Normal API - v1
+# ============================================================
+
+RewriteRule ^api/v1/api$ api/normal/v1/api.php [L]
+RewriteRule ^api/v1/refresh$ api/normal/v1/refresh.php [L]
+
+
+# ============================================================
+# Zaščita internih map
+# ============================================================
+
+RewriteRule ^config/ - [F,L]
+RewriteRule ^keys/ - [F,L]

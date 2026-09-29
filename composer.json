@@ -1,5 +1,14 @@
 {
     "require": {
         "firebase/php-jwt": "^7.2"
+    },
+    "autoload": {
+        "classmap": [
+            "server/classes/"
+            
+        ],
+        "files": [
+                "costume_log.php"
+            ]
     }
 }

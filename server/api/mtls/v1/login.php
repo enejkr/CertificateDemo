@@ -3,19 +3,10 @@
 header('Content-Type: application/json');
 
 // Composer
-require_once __DIR__ . '/../../vendor/autoload.php';
-
-// Classes
-require_once __DIR__ . '/../classes/Certificate.php';
-require_once __DIR__ . '/../classes/JwtToken.php';
-require_once __DIR__ . '/../classes/RefreshToken.php';
-require_once __DIR__ . '/../classes/Database.php';
-
-// Logger
-require_once __DIR__ . '/../../costume_log.php';
+require_once __DIR__ . '/../../../../vendor/autoload.php';
 
 $config = parse_ini_file(
-    __DIR__ . '/../config/config.ini',
+    __DIR__ . '/../../../config/config.ini',
     true
 );
 

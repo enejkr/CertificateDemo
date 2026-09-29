@@ -3,9 +3,9 @@
 require_once __DIR__ . '/classes/Client.php';
 require_once __DIR__ . '/functions/token_helper.php';
 
-$url = 'https://localhost:8443/mtls-api/login.php';
-$apiUrl = 'https://localhost:8443/api/api.php';
-$refreshUrl = 'https://localhost:8443/api/refresh.php';
+$url = 'https://localhost:8443/auth/login';
+$apiUrl = 'https://localhost:8443/api/v1/api';
+$refreshUrl = 'https://localhost:8443/api/v1/refresh';
 
 $client = new Client(
     dirname(__DIR__) . '/certs/ca.crt',

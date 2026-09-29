@@ -1,19 +1,11 @@
 <?php
-
 // composer 
-require_once __DIR__ . "/../../vendor/autoload.php";
-
-//classes 
-require_once __DIR__ . "/../classes/JwtToken.php";
-
+require_once __DIR__ . '/../../../../vendor/autoload.php';
 // helpers
-require_once __DIR__ . "/../functions/helper.php";
-require_once __DIR__ . "/../../costume_log.php";
-
-
+require_once __DIR__ . "/../../../functions/helper.php";
 
 $config = parse_ini_file(
-    __DIR__ . "/../config/config.ini",
+    __DIR__ . "/../../../config/config.ini",
     true
 );
 
@@ -23,7 +15,7 @@ try {
     $accessToken = extractToken();
 
     $jwt = new JwToken(
-        __DIR__ . "/../keys/private.key",
+        $config['keys']['private_key'],
         $config['keys']['public_key'],
         $config['jwt']
     );

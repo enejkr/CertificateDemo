@@ -2,20 +2,14 @@
 
 header('Content-Type: application/json');
 
-// classes 
-require_once __DIR__ . "/../classes/RefreshToken.php";
-require_once __DIR__ . '/../classes/Database.php';
-require_once __DIR__ . "/../classes/JwtToken.php";
-
 // helpers 
-require_once __DIR__ . "/../functions/helper.php";
+require_once __DIR__ . "/../../../functions/helper.php";
 
 // composer 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
+require_once __DIR__ . '/../../../../vendor/autoload.php';
 
 $config = parse_ini_file(
-    __DIR__ . '/../config/config.ini',
+    __DIR__ . '/../../../config/config.ini',
     true
 );
 
@@ -30,8 +24,8 @@ try {
     );
 
     $jwt = new JwToken(
-        __DIR__ . "/../keys/private.key",
-        __DIR__ . "/../keys/public.key",
+        $config['keys']['private_key'],
+        $config['keys']['public_key'],
         $config['jwt']
     );
 
