@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 // included files
 require_once __DIR__ . "/../classes/RefreshToken.php";
 require_once __DIR__ . '/../classes/Database.php';
-require_once __DIR__ . "/../classes/Jwt.php";
+require_once __DIR__ . "/../classes/JwtToken.php";
 require_once __DIR__ . "/../functions/helper.php";
 
 try {
@@ -15,7 +15,7 @@ try {
 
     $refreshTokenService = new RefreshToken($pdo);
 
-    $jwt = new Jwt(
+    $jwt = new JwToken(
         __DIR__ . "/../keys/private.key",
         __DIR__ . "/../keys/public.key"
     );

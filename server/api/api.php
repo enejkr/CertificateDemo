@@ -1,19 +1,26 @@
 <?php
 
-require_once __DIR__ . "/../classes/Jwt.php";
+require_once __DIR__ . "/../../vendor/autoload.php";
+require_once __DIR__ . "/../classes/JwtToken.php";
 require_once __DIR__ . "/../functions/helper.php";
 require_once __DIR__ . "/../../costume_log.php";
 
 $publicKeyPath = __DIR__ . "/../keys/public.key";
+
+$config = parse_ini_file(
+    __DIR__ . "/../config/server.ini",
+    true
+);
 
 header('Content-Type: application/json');
 
 try {
     $accessToken = extractToken();
 
-    $jwt = new Jwt(
+    $jwt = new JwToken(
         __DIR__ . "/../keys/private.key",
-        $publicKeyPath
+        $publicKeyPath,
+        $config['jwt']
     );
 
     $data = $jwt->verifyJwt($accessToken);
@@ -34,7 +41,7 @@ try {
 
     echo json_encode([
         'success' => false,
-        'sporocilo' => $e,
+        'sporocilo' => $e->getMessage()
     ]);
 
     exit;

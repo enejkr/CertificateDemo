@@ -1,5 +1,18 @@
+# Composer
+/vendor/
+
+# Logs
 /logs/
+
+# Private keys / certificates
 *key
-*crt 
-*srl 
-*csr 
+*crt
+*srl
+*csr
+
+# Configuration / secrets
+*ini
+
+/certs/*
+!/certs/setup/
+!/certs/setup/**
