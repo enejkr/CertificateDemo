@@ -1,14 +1,19 @@
 <?php
 
+// composer 
 require_once __DIR__ . "/../../vendor/autoload.php";
+
+//classes 
 require_once __DIR__ . "/../classes/JwtToken.php";
+
+// helpers
 require_once __DIR__ . "/../functions/helper.php";
 require_once __DIR__ . "/../../costume_log.php";
 
-$publicKeyPath = __DIR__ . "/../keys/public.key";
+
 
 $config = parse_ini_file(
-    __DIR__ . "/../config/server.ini",
+    __DIR__ . "/../config/config.ini",
     true
 );
 
@@ -19,7 +24,7 @@ try {
 
     $jwt = new JwToken(
         __DIR__ . "/../keys/private.key",
-        $publicKeyPath,
+        $config['keys']['public_key'],
         $config['jwt']
     );
 

@@ -11,3 +11,7 @@ expires_in =
 [refresh_token]
 expires_in = 
 token_bytes = 
+
+[keys]
+private_key = 
+public_key = 

@@ -2,22 +2,37 @@
 
 header('Content-Type: application/json');
 
-// included files
+// classes 
 require_once __DIR__ . "/../classes/RefreshToken.php";
 require_once __DIR__ . '/../classes/Database.php';
 require_once __DIR__ . "/../classes/JwtToken.php";
+
+// helpers 
 require_once __DIR__ . "/../functions/helper.php";
+
+// composer 
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+
+$config = parse_ini_file(
+    __DIR__ . '/../config/config.ini',
+    true
+);
 
 try {
 
     $database = new Database();
     $pdo = $database->getConnection();
 
-    $refreshTokenService = new RefreshToken($pdo);
+    $refreshTokenService = new RefreshToken(
+        $pdo,
+        $config['refresh_token']
+    );
 
     $jwt = new JwToken(
         __DIR__ . "/../keys/private.key",
-        __DIR__ . "/../keys/public.key"
+        __DIR__ . "/../keys/public.key",
+        $config['jwt']
     );
 
     $refreshToken = extractToken();
@@ -57,7 +72,7 @@ try {
         'access_token' => $newAccessToken,
         'refresh_token' => $newRefreshToken,
         'token_type' => 'Bearer',
-        'expires_in' => 20
+        'expires_in' => (int)$config['jwt']['expires_in']
     ]);
 
 } catch (Exception $e) {

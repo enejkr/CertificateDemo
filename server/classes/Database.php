@@ -7,7 +7,7 @@ class Database
     public function __construct()
     {
         $config = parse_ini_file(
-            __DIR__ . '/../config/server.ini',
+            __DIR__ . '/../config/config.ini',
             true
         );
 

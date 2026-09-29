@@ -3,14 +3,14 @@
 class RefreshToken
 {
     private PDO $pdo;
-    private int $expiresInDays;
+    private int $expiresIn;
     private int $tokenBytes;
 
     public function __construct(PDO $pdo, array $config)
     {
         $this->pdo = $pdo;
 
-        $this->expiresInDays = (int)$config['expires_in_days'];
+        $this->expiresIn = (int)$config['expires_in'];
         $this->tokenBytes = (int)$config['token_bytes'];
     }
 
@@ -43,7 +43,7 @@ class RefreshToken
         // Calculate expiration date
         $expiresAt = date(
             'Y-m-d H:i:s',
-            time() + $this->expiresInDays
+            time() + $this->expiresIn
         );
 
         $stmt = $this->pdo->prepare("

@@ -2,12 +2,22 @@
 
 header('Content-Type: application/json');
 
-// included files
+// Composer
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+// Classes
 require_once __DIR__ . '/../classes/Certificate.php';
-require_once __DIR__ . '/../classes/Jwt.php';
+require_once __DIR__ . '/../classes/JwtToken.php';
 require_once __DIR__ . '/../classes/RefreshToken.php';
 require_once __DIR__ . '/../classes/Database.php';
+
+// Logger
 require_once __DIR__ . '/../../costume_log.php';
+
+$config = parse_ini_file(
+    __DIR__ . '/../config/config.ini',
+    true
+);
 
 try {
 
@@ -15,13 +25,18 @@ try {
     $pdo = $database->getConnection();
 
     $certificate = new Certificate($pdo);
-    $refreshTokenService = new RefreshToken($pdo);
+    
+    $refreshTokenService = new RefreshToken(
+        $pdo,
+        $config['refresh_token']
+    );
 
     $user = $certificate->verify();
 
-    $jwt = new Jwt(
-        __DIR__ . '/../keys/private.key',
-        __DIR__ . '/../keys/public.key'
+    $jwt = new JwToken(
+        __DIR__ . '/' . $config['keys']['private_key'],
+        __DIR__ . '/' . $config['keys']['public_key'],
+        $config['jwt']
     );
 
     $accessToken = $jwt->createAccessToken($user);
@@ -36,7 +51,7 @@ try {
         'access_token' => $accessToken,
         'refresh_token' => $refreshToken,
         'token_type' => 'Bearer',
-        'expires_in' => 20
+        'expires_in' => (int)$config['jwt']['expires_in']
     ]);
 
 } catch (Exception $e) {
