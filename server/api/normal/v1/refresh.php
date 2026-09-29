@@ -18,6 +18,8 @@ try {
     $database = new Database();
     $pdo = $database->getConnection();
 
+    $rateLimiter = new RateLimiter($pdo);
+
     $refreshTokenService = new RefreshToken(
         $pdo,
         $config['refresh_token']
@@ -32,6 +34,26 @@ try {
     $refreshToken = extractToken();
 
     $data = $refreshTokenService->verify($refreshToken);
+
+    $rateLimit = $rateLimiter->check(
+        'refresh:user:' . $data['user_id'],
+        $config['refresh_limits']['attempts_count'],
+        $config['refresh_limits']['time_period']
+    );
+
+    if (!$rateLimit['allowed']) {
+        http_response_code(429);
+
+        header(
+            'Retry-After: ' . $rateLimit['retry_after']
+        );
+
+        echo json_encode([
+            'success' => false,
+            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
+        ]);
+        exit;
+    }
 
     $stmt = $pdo->prepare("
         SELECT *

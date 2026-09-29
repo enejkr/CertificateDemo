@@ -15,6 +15,30 @@ try {
     $database = new Database();
     $pdo = $database->getConnection();
 
+    $rateLimiter = new RateLimiter($pdo);
+
+    $ip = $_SERVER['REMOTE_ADDR'];
+
+    $rateLimit = $rateLimiter->check(
+        'login:ip:' . $ip,
+        $config['login_limits']['attempts_count'],
+        $config['login_limits']['time_period']
+    );
+
+    if (!$rateLimit['allowed']) {
+        http_response_code(429);
+
+        header(
+            'Retry-After: ' . $rateLimit['retry_after']
+        );
+
+        echo json_encode([
+            'success' => false,
+            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
+        ]);
+        exit;
+    }
+
     $certificate = new Certificate($pdo);
     
     $refreshTokenService = new RefreshToken(

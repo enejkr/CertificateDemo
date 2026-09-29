@@ -8,7 +8,8 @@
             
         ],
         "files": [
-                "costume_log.php"
-            ]
+                "costume_log.php", 
+                "server/functions/apiHelper.php"
+            ]       
     }
 }

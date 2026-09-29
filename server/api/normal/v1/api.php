@@ -1,4 +1,5 @@
 <?php
+
 // composer 
 require_once __DIR__ . '/../../../../vendor/autoload.php';
 // helpers
@@ -12,6 +13,37 @@ $config = parse_ini_file(
 header('Content-Type: application/json');
 
 try {
+
+    $database = new Database();
+    $pdo = $database->getConnection();
+
+    $rateLimiter = new RateLimiter($pdo);
+
+    $ip = $_SERVER['REMOTE_ADDR'];
+
+    $rateLimit = $rateLimiter->check(
+        'api:ip:' . $ip,
+        $config['api_limits_ip']['attempts_count'],
+        $config['api_limits_ip']['time_period']
+ 
+    );
+
+    if (!$rateLimit['allowed']) {
+        http_response_code(429);
+
+        header(
+            'Retry-After: ' . $rateLimit['retry_after']
+        );
+
+        echo json_encode([
+            'success' => false,
+            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' .
+                $rateLimit['retry_after'] . ' sekund.'
+        ]);
+
+        exit;
+    }
+
     $accessToken = extractToken();
 
     $jwt = new JwToken(
@@ -21,6 +53,27 @@ try {
     );
 
     $data = $jwt->verifyJwt($accessToken);
+
+    $rateLimit = $rateLimiter->check(
+        'api:user:' . (string)$data['sub'],
+        $config['api_limits_user']['attempts_count'],
+        $config['api_limits_user']['time_period']
+    );
+
+    if (!$rateLimit['allowed']) {
+        http_response_code(429);
+
+        header(
+            'Retry-After: ' . $rateLimit['retry_after']
+        );
+
+        echo json_encode([
+            'success' => false,
+            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
+        ]);
+
+        exit;
+    }
 
     customLog($data);
 
