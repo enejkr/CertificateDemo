@@ -29,7 +29,7 @@ if (!$rateLimit['allowed']) {
 
     apiError(
         'RATE_LIMIT_EXCEEDED',
-        'Preveč zahtev. Poskusite ponovno čez ' . $rateLimit['retry_after'] . ' sekund.',
+        'Too many requests. Please try again in ' . $rateLimit['retry_after'] . ' seconds.',
         429
     );
 }
@@ -69,5 +69,5 @@ apiSuccess(
         //'expires_in' => (int)$config['jwt']['expires_in'],
         
     ],
-    'succesfull login'
+    'Successful login'
 );

@@ -53,6 +53,5 @@ apiSuccess(
     [
         'access_token' => $accessToken
     ],
-    'sucessful connection'
+    'Successful connection'
 );
-

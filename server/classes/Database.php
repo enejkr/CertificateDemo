@@ -12,7 +12,7 @@ class Database
         );
 
         if ($config === false) {
-            throw new RuntimeException('Unable to load server.ini');
+            throw new RuntimeException('Unable to load config.ini');
         }
 
         $host = $config['database']['db_host'];

@@ -16,7 +16,7 @@ class Certificate
         if ($verify !== 'SUCCESS') {
             throw new ApiException(
                 'CERTIFICATE_VERIFICATION_FAILED',
-                'Avtentikacija s certifikatom ni uspela.',
+                'Certificate authentication failed.',
                 401
             );
         }
@@ -26,7 +26,7 @@ class Certificate
         if ($clientCertificate === '') {
             throw new ApiException(
                 'CERTIFICATE_MISSING',
-                'Klientov certifikat ni bil posredovan.',
+                'Client certificate was not provided.',
                 401
             );
         }
@@ -39,7 +39,7 @@ class Certificate
         if ($fingerprint === false) {
             throw new ApiException(
                 'CERTIFICATE_INVALID',
-                'Klientov certifikat ni veljaven.',
+                'Client certificate is invalid.',
                 401
             );
         }
@@ -66,7 +66,7 @@ class Certificate
         if (!$client) {
             throw new ApiException(
                 'AUTHENTICATION_FAILED',
-                'Prijava ni uspela.',
+                'Authentication failed.',
                 401
             );
         }

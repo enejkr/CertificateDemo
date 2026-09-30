@@ -20,7 +20,7 @@ class Jwt
 
         if ($this->algorithm !== 'RS256') {
             throw new InvalidArgumentException(
-                'Podprt je samo RS256.'
+                'Only RS256 is supported.'
             );
         }
     }
@@ -34,7 +34,7 @@ class Jwt
 
         if ($privateKey === false) {
             throw new RuntimeException(
-                'Private key ni mogoče prebrati.'
+                'Unable to read private key.'
             );
         }
 
@@ -79,7 +79,7 @@ class Jwt
 
         if ($result !== true) {
             throw new RuntimeException(
-                'JWT podpisa ni mogoče ustvariti.'
+                'Unable to create JWT signature.'
             );
         }
 
@@ -141,7 +141,7 @@ class Jwt
                 )
             ) {
                 throw new RuntimeException(
-                    'JWT payload nima vseh obveznih podatkov.'
+                    'JWT payload is missing required data.'
                 );
             }
 
@@ -161,7 +161,7 @@ class Jwt
 
             if ((int)$payload['exp'] <= $now) {
                 throw new RuntimeException(
-                    'JWT je potekel.'
+                    'JWT has expired.'
                 );
             }
 
@@ -177,7 +177,7 @@ class Jwt
 
             if ($publicKey === false) {
                 throw new RuntimeException(
-                    'Public key ni mogoče prebrati.'
+                    'Unable to read public key.'
                 );
             }
 
@@ -206,7 +206,7 @@ class Jwt
 
             throw new ApiException(
                 'INVALID_ACCESS_TOKEN',
-                'Access token ni veljaven.',
+                'Access token is invalid.',
                 401
             );
         }

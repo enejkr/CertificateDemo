@@ -90,7 +90,7 @@ class RefreshToken
         if ($result === false) {
             throw new ApiException(
                 'INVALID_REFRESH_TOKEN',
-                'Refresh token ni veljaven.',
+                'Refresh token is invalid.',
                 401
             );
         }
@@ -99,7 +99,7 @@ class RefreshToken
         if ($result['revoked_at'] !== null) {
             throw new ApiException(
                 'INVALID_REFRESH_TOKEN',
-                'Refresh token ni veljaven.',
+                'Refresh token is invalid.',
                 401
             );
         }
@@ -111,14 +111,14 @@ class RefreshToken
 
         if ($expiresAt === false) {
             throw new RuntimeException(
-                'Invalid refresh token expiration date'
+                'Invalid refresh token expiration date.'
             );
         }
 
         if ($expiresAt <= time()) {
             throw new ApiException(
                 'REFRESH_TOKEN_EXPIRED',
-                'Refresh token je potekel.',
+                'Refresh token has expired.',
                 401
             );
         }

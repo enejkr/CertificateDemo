@@ -56,7 +56,7 @@ if ($client === false) {
     
     throw new ApiException(
         'AUTHENTICATION_FAILED',
-        'Prijava ni uspela.',
+        'Authentication failed.',
         401
     );
 }
@@ -87,5 +87,5 @@ apiSuccess(
         'token_type' => 'Bearer',
         'expires_in' => (int)$config['jwt']['expires_in']
     ],
-    'Token uspešno osvežen.'
+    'Token successfully refreshed.'
 );
