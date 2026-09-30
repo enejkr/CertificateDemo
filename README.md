@@ -318,6 +318,50 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
 
 ---
 
+# Formar in standard odgovorov 
+## Uspešen request 
+```
+{
+    "success": true,
+    "message": "Token uspešno osvežen.",
+    "data": {
+        "access_token": "...",
+        "refresh_token": "...",
+        "token_type": "Bearer",
+    }
+}
+```
+## Napaka 
+```
+{
+    "success": false,
+    "error": {
+        "code": "INVALID_ACCESS_TOKEN",
+        "message": "Access token ni veljaven."
+    }
+}
+```
+## seznam error.code 
+| HTTP | `error.code` | Kje | Pomen |
+|---:|---|---|---|
+| 400 | `BAD_REQUEST` | endpoint | Zahteva je sintaktično/nepričakovano napačna |
+| 401 | `CERTIFICATE_VERIFICATION_FAILED` | `Certificate` | mTLS certifikat ni bil uspešno preverjen |
+| 401 | `CERTIFICATE_MISSING` | `Certificate` | Client certifikat manjka |
+| 401 | `CERTIFICATE_INVALID` | `Certificate` | Certifikata ni mogoče obdelati |
+| 401 | `AUTHENTICATION_FAILED` | `Certificate` / refresh | Uporabnika ni mogoče avtenticirati |
+| 401 | `INVALID_ACCESS_TOKEN` | `JwToken` / `extractToken` | Access token manjka ali ni veljaven |
+| 401 | `INVALID_REFRESH_TOKEN` | `RefreshToken` | Refresh token ne obstaja ali je preklican |
+| 401 | `REFRESH_TOKEN_EXPIRED` | `RefreshToken` | Refresh token je potekel |
+| 403 | `FORBIDDEN` | endpoint | Uporabnik je prijavljen, ampak nima dovoljenja |
+| 404 | `NOT_FOUND` | endpoint | Zahtevan vir ne obstaja |
+| 409 | `CONFLICT` | endpoint/service | Konflikt podatkov |
+| 422 | `VALIDATION_ERROR` | endpoint | Podatki niso validni |
+| 429 | `RATE_LIMIT_EXCEEDED` | endpoint | Preveč zahtev |
+| 500 | `INTERNAL_SERVER_ERROR` | vsi endpointi | Nepričakovana napaka strežnika |
+| 503 | `SERVICE_UNAVAILABLE` | DB/zunanji servis | Storitev trenutno ni na voljo |
+
+---
+
 # Varnost
 
 Zasebni ključi (`.key`) ne smejo biti javno objavljeni.
