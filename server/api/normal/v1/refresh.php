@@ -1,15 +1,14 @@
 <?php
-
 header('Content-Type: application/json');
-
-// helpers 
-require_once __DIR__ . "/../../../functions/helper.php";
 
 // composer 
 require_once __DIR__ . '/../../../../vendor/autoload.php';
+// helpers
+require_once __DIR__ . "/../../../functions/helper.php";
+require_once __DIR__ . "/../../../functions/apiHelper.php";
 
 $config = parse_ini_file(
-    __DIR__ . '/../../../config/config.ini',
+    __DIR__ . "/../../../config/config.ini",
     true
 );
 
@@ -20,87 +19,126 @@ try {
 
     $rateLimiter = new RateLimiter($pdo);
 
-    $refreshTokenService = new RefreshToken(
-        $pdo,
-        $config['refresh_token']
-    );
-
-    $jwt = new JwToken(
-        $config['keys']['private_key'],
-        $config['keys']['public_key'],
-        $config['jwt']
-    );
-
-    $refreshToken = extractToken();
-
-    $data = $refreshTokenService->verify($refreshToken);
+    $ip = $_SERVER['REMOTE_ADDR'];
 
     $rateLimit = $rateLimiter->check(
-        'refresh:user:' . $data['user_id'],
-        $config['refresh_limits']['attempts_count'],
-        $config['refresh_limits']['time_period']
+        'refresh:ip:' . $ip,
+        $config['api_limits_ip']['attempts_count'],
+        $config['api_limits_ip']['time_period']
+ 
     );
 
     if (!$rateLimit['allowed']) {
-        http_response_code(429);
 
         header(
             'Retry-After: ' . $rateLimit['retry_after']
         );
 
-        echo json_encode([
-            'success' => false,
-            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
-        ]);
-        exit;
+        apiError(
+            'RATE_LIMIT_EXCEEDED',
+            'Preveč zahtev. Poskusite ponovno čez ' .
+                $rateLimit['retry_after'] . ' sekund.',
+            429
+        );
+    }
+
+    $refreshToken = extractToken();
+
+    $refreshTokenService = new RefreshToken(
+        $pdo,
+        $config['refresh_token']
+    );
+
+    $tokenData = $refreshTokenService->verify(
+        $refreshToken
+    );
+
+    $rateLimit = $rateLimiter->check(
+        'refresh:user:' . (string)$tokenData['user_id'],
+        $config['api_limits_user']['attempts_count'],
+        $config['api_limits_user']['time_period']
+    );
+
+    if (!$rateLimit['allowed']) {
+
+        header(
+            'Retry-After: ' . $rateLimit['retry_after']
+        );
+
+        apiError(
+            'RATE_LIMIT_EXCEEDED',
+            'Preveč zahtev. Poskusite ponovno čez ' .
+                $rateLimit['retry_after'] . ' sekund.',
+            429
+        );
     }
 
     $stmt = $pdo->prepare("
-        SELECT *
+        SELECT id, username
         FROM users
         WHERE id = ?
         LIMIT 1
     ");
 
     $stmt->execute([
-        $data['user_id']
+        $tokenData['user_id']
     ]);
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user === false) {
-        throw new Exception('Uporabnik ne obstaja.');
+        throw new ApiException(
+            'AUTHENTICATION_FAILED',
+            'Prijava ni uspela.',
+            401
+        );
     }
 
-    ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
+    $jwt = new JwToken(
+        __DIR__ . '/' . $config['keys']['private_key'],
+        __DIR__ . '/' . $config['keys']['public_key'],
+        $config['jwt']
+    );
 
-    $newAccessToken = $jwt->createAccessToken($user);
-
-    ////////////// IZDAJA NOVEGA REFRESH TOKENA \\\\\\\\\\\\\\\
+    $accessToken = $jwt->createAccessToken(
+        $user
+    );
 
     $newRefreshToken = $refreshTokenService->create(
         $user['id']
     );
 
-    echo json_encode([
-        'success' => true,
-        'sporocilo' => 'Refresh uspešen.',
-        'access_token' => $newAccessToken,
-        'refresh_token' => $newRefreshToken,
-        'token_type' => 'Bearer',
-        'expires_in' => (int)$config['jwt']['expires_in']
+    customLog([
+        'user_id' => $user['id']
     ]);
 
-} catch (Exception $e) {
+    apiSuccess(
+        [
+            'access_token' => $accessToken,
+            'refresh_token' => $newRefreshToken,
+            'token_type' => 'Bearer',
+            'expires_in' => (int)$config['jwt']['expires_in']
+        ],
+        'Token uspešno osvežen.'
+    );
 
-    error_log($e->getMessage());
+} catch (ApiException $e) {
 
-    http_response_code(401);
+    customLog($e->getMessage());
 
-    echo json_encode([
-        'success' => false,
-        'sporocilo' => 'Refresh token ni veljaven.'
-    ]);
+    apiError(
+        $e->getErrorCode(),
+        $e->getMessage(),
+        $e->getStatusCode()
+    );
 
-    exit;
+} catch (Throwable $e) {
+
+    customLog($e->getMessage());
+
+    apiError(
+        'INTERNAL_SERVER_ERROR',
+        'Prišlo je do notranje napake strežnika.',
+        500
+    );
 }

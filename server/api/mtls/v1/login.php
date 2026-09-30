@@ -26,17 +26,16 @@ try {
     );
 
     if (!$rateLimit['allowed']) {
-        http_response_code(429);
 
         header(
             'Retry-After: ' . $rateLimit['retry_after']
         );
 
-        echo json_encode([
-            'success' => false,
-            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
-        ]);
-        exit;
+        apiError(
+            'RATE_LIMIT_EXCEEDED',
+            'Preveč zahtev. Poskusite ponovno čez ' . $rateLimit['retry_after'] . ' sekund.',
+            429
+        );
     }
 
     $certificate = new Certificate($pdo);
@@ -60,25 +59,33 @@ try {
 
     $refreshToken = $refreshTokenService->create($user['id']);
 
-    echo json_encode([
-        'success' => true,
-        'sporocilo' => 'Prijava uspesna.',
-        'access_token' => $accessToken,
-        'refresh_token' => $refreshToken,
-        'token_type' => 'Bearer',
-        'expires_in' => (int)$config['jwt']['expires_in']
-    ]);
+    apiSuccess(
+        [
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'token_type' => 'Bearer',
+            //'expires_in' => (int)$config['jwt']['expires_in']
+        ],
+        'Prijava uspešna.'
+    );
 
-} catch (Exception $e) {
+} catch (ApiException $e) {
 
     customLog($e->getMessage());
 
-    http_response_code(401);
+    apiError(
+        $e->getErrorCode(),
+        $e->getMessage(),
+        $e->getStatusCode()
+    );
 
-    echo json_encode([
-        'success' => false,
-        'sporocilo' => 'Prijava ni uspela.'
-    ]);
+} catch (Throwable $e) {
 
-    exit;
+    customLog($e->getMessage());
+
+    apiError(
+        'INTERNAL_SERVER_ERROR',
+        'Prišlo je do notranje napake strežnika.',
+        500
+    );
 }

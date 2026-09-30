@@ -29,19 +29,17 @@ try {
     );
 
     if (!$rateLimit['allowed']) {
-        http_response_code(429);
 
         header(
             'Retry-After: ' . $rateLimit['retry_after']
         );
 
-        echo json_encode([
-            'success' => false,
-            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' .
-                $rateLimit['retry_after'] . ' sekund.'
-        ]);
-
-        exit;
+        apiError(
+            'RATE_LIMIT_EXCEEDED',
+            'Preveč zahtev. Poskusite ponovno čez ' .
+                $rateLimit['retry_after'] . ' sekund.',
+            429
+        );
     }
 
     $accessToken = extractToken();
@@ -61,38 +59,45 @@ try {
     );
 
     if (!$rateLimit['allowed']) {
-        http_response_code(429);
 
         header(
             'Retry-After: ' . $rateLimit['retry_after']
         );
 
-        echo json_encode([
-            'success' => false,
-            'sporocilo' => 'Prevec zahtev. Poskusite ponovno cez ' . $rateLimit['retry_after'] . ' sekund.',
-        ]);
-
-        exit;
+        apiError(
+            'RATE_LIMIT_EXCEEDED',
+            'Preveč zahtev. Poskusite ponovno čez ' .
+                $rateLimit['retry_after'] . ' sekund.',
+            429
+        );
     }
 
     customLog($data);
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Uspešno povezan na API',
-        'access_token' => $data
-    ]);
+    apiSuccess(
+        [
+            'access_token' => $accessToken
+        ],
+        'Uspešno povezan na API'
+    );
 
-} catch (Exception $e) {
+} catch (ApiException $e) {
 
     customLog($e->getMessage());
 
-    http_response_code(401);
+    apiError(
+        $e->getErrorCode(),
+        $e->getMessage(),
+        $e->getStatusCode()
+    );
 
-    echo json_encode([
-        'success' => false,
-        'sporocilo' => $e->getMessage()
-    ]);
+} catch (Throwable $e) {
 
-    exit;
+    customLog($e->getMessage());
+
+    apiError(
+        'INTERNAL_SERVER_ERROR',
+        'Prišlo je do notranje napake strežnika.',
+        500
+    );
 }
