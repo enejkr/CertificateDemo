@@ -1,8 +1,6 @@
-# Composer
-/vendor/
-
 # Logs
-/logs/
+/server/logs/*
+/logs/*
 
 # Private keys / certificates
 *key

@@ -1,9 +1,19 @@
 <?php
 
-// composer 
-require_once __DIR__ . '/../../../../vendor/autoload.php';
-// helpers
+// classes 
+require_once __DIR__ . "/../../../classes/Database.php";
+require_once __DIR__ . "/../../../classes/RateLimiter.php";
+require_once __DIR__ . "/../../../classes/Certificate.php";
+require_once __DIR__ . "/../../../classes/RefreshToken.php";
+require_once __DIR__ . "/../../../classes/ApiException.php";
+require_once __DIR__ . "/../../../classes/Jwt.php";
+
+
+// helpers 
+require_once __DIR__ . "/../../../logger.php";
+require_once __DIR__ . "/../../../functions/apiHelper.php";
 require_once __DIR__ . "/../../../functions/helper.php";
+
 
 $config = parse_ini_file(
     __DIR__ . "/../../../config/config.ini",
@@ -21,30 +31,30 @@ try {
 
     $ip = $_SERVER['REMOTE_ADDR'];
 
-    $rateLimit = $rateLimiter->check(
-        'api:ip:' . $ip,
-        $config['api_limits_ip']['attempts_count'],
-        $config['api_limits_ip']['time_period']
+    // $rateLimit = $rateLimiter->check(
+    //     'api:ip:' . $ip,
+    //     $config['general_limit']['attempts_count'],
+    //     $config['general_limit']['time_period']
  
-    );
+    // );
 
-    if (!$rateLimit['allowed']) {
+    // if (!$rateLimit['allowed']) {
 
-        header(
-            'Retry-After: ' . $rateLimit['retry_after']
-        );
+    //     header(
+    //         'Retry-After: ' . $rateLimit['retry_after']
+    //     );
 
-        apiError(
-            'RATE_LIMIT_EXCEEDED',
-            'Preveč zahtev. Poskusite ponovno čez ' .
-                $rateLimit['retry_after'] . ' sekund.',
-            429
-        );
-    }
+    //     apiError(
+    //         'RATE_LIMIT_EXCEEDED',
+    //         'Preveč zahtev. Poskusite ponovno čez ' .
+    //             $rateLimit['retry_after'] . ' sekund.',
+    //         429
+    //     );
+    // }
 
     $accessToken = extractToken();
 
-    $jwt = new JwToken(
+    $jwt = new Jwt(
         $config['keys']['private_key'],
         $config['keys']['public_key'],
         $config['jwt']
@@ -52,25 +62,25 @@ try {
 
     $data = $jwt->verifyJwt($accessToken);
 
-    $rateLimit = $rateLimiter->check(
-        'api:user:' . (string)$data['sub'],
-        $config['api_limits_user']['attempts_count'],
-        $config['api_limits_user']['time_period']
-    );
+    // $rateLimit = $rateLimiter->check(
+    //     'api:user:' . (string)$data['sub'],
+    //     $config['api_limits_user']['attempts_count'],
+    //     $config['api_limits_user']['time_period']
+    // );
 
-    if (!$rateLimit['allowed']) {
+    // if (!$rateLimit['allowed']) {
 
-        header(
-            'Retry-After: ' . $rateLimit['retry_after']
-        );
+    //     header(
+    //         'Retry-After: ' . $rateLimit['retry_after']
+    //     );
 
-        apiError(
-            'RATE_LIMIT_EXCEEDED',
-            'Preveč zahtev. Poskusite ponovno čez ' .
-                $rateLimit['retry_after'] . ' sekund.',
-            429
-        );
-    }
+    //     apiError(
+    //         'RATE_LIMIT_EXCEEDED',
+    //         'Preveč zahtev. Poskusite ponovno čez ' .
+    //             $rateLimit['retry_after'] . ' sekund.',
+    //         429
+    //     );
+    // }
 
     customLog($data);
 

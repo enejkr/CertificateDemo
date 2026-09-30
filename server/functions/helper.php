@@ -14,5 +14,5 @@ function extractToken(): string
         );
     }
 
-    return $matches[1];
+    return trim($matches[1]);
 }
