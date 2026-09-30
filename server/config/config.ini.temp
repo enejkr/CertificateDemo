@@ -17,17 +17,9 @@ private_key =
 public_key = 
 
 [login_limits]
-attempts_count = 
-time_period = 
-
-[api_limits_ip]
-attempts_count = 
-time_period = 
-
-[api_limits_user]
 attempts_count =  
 time_period = 
 
-[refresh_limits]
-attempts_count =  
+[general_limit]
+attempts_count = 
 time_period = 
