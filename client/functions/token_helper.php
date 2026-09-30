@@ -99,8 +99,8 @@ function refreshTokens(
     );
 
     saveTokens(
-        $result['access_token'],
-        $result['refresh_token']
+        $result['data']['access_token'],
+        $result['data']['refresh_token']
     );
 
     return $result;

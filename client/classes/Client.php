@@ -81,9 +81,18 @@ class Client
 
         if ($httpCode < 200 || $httpCode >= 300) {
             throw new Exception(
-                $data['sporocilo']
-                ?? $data['message']
+                $data['error']['message']
                 ?? 'API napaka. HTTP status: ' . $httpCode
+            );
+        }
+
+        if (
+            !isset($data['success']) ||
+            $data['success'] !== true
+        ) {
+            throw new Exception(
+                $data['error']['message']
+                ?? 'API je vrnil neuspešen odgovor.'
             );
         }
 
@@ -124,11 +133,11 @@ class Client
         );
 
         if (
-            empty($data['access_token']) ||
-            empty($data['refresh_token'])
+            empty($data['data']['access_token']) ||
+            empty($data['data']['refresh_token'])
         ) {
             throw new Exception(
-                $data['sporocilo']
+                $data['error']['message']
                 ?? 'Refresh odgovor nima tokenov.'
             );
         }
@@ -155,11 +164,11 @@ class Client
         );
 
         if (
-            empty($data['access_token']) ||
-            empty($data['refresh_token'])
+            empty($data['data']['access_token']) ||
+            empty($data['data']['refresh_token'])
         ) {
             throw new Exception(
-                $data['sporocilo']
+                $data['error']['message']
                 ?? 'Login odgovor nima tokenov.'
             );
         }

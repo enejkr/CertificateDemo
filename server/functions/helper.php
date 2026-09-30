@@ -1,13 +1,17 @@
 <?php
 
-function extractToken()
+function extractToken(): string
 {
     $headers = getallheaders();
 
     $authorization = $headers['Authorization'] ?? '';
 
     if (!preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)) {
-        throw new Exception("Access token manjka ali je neveljaven.");
+        throw new ApiException(
+            'INVALID_ACCESS_TOKEN',
+            'Access token manjka ali je neveljaven.',
+            401
+        );
     }
 
     return $matches[1];

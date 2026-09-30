@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../../costume_log.php";
+
 class Certificate
 {
     private PDO $pdo;
@@ -8,23 +9,46 @@ class Certificate
     {
         $this->pdo = $pdo;
     }
+
     // returns a certificates fingerprint  
     private function getClientCertificateFingerprint()
     {
         $verify = $_SERVER['SSL_CLIENT_VERIFY'] ?? '';
 
         if ($verify !== 'SUCCESS') {
-            throw new Exception ("verification failed");
+            throw new ApiException(
+                'CERTIFICATE_VERIFICATION_FAILED',
+                'Avtentikacija s certifikatom ni uspela.',
+                401
+            );
         }
 
         $clientCertificate = $_SERVER['SSL_CLIENT_CERT'] ?? '';
 
         if ($clientCertificate === '') {
-            throw new Exception ("client certificate empty");
+            throw new ApiException(
+                'CERTIFICATE_MISSING',
+                'Klientov certifikat ni bil posredovan.',
+                401
+            );
         }
 
-        return openssl_x509_fingerprint($clientCertificate, "sha256"); ; 
+        $fingerprint = openssl_x509_fingerprint(
+            $clientCertificate,
+            'sha256'
+        );
+
+        if ($fingerprint === false) {
+            throw new ApiException(
+                'CERTIFICATE_INVALID',
+                'Klientov certifikat ni veljaven.',
+                401
+            );
+        }
+
+        return $fingerprint;
     }
+
     // returns a user name, id and fingerprit of a connecterd user 
     public function verify()
     {
@@ -44,7 +68,11 @@ class Certificate
         $user = $stmt->fetch();
 
         if (!$user) {
-           throw new Exception ("user not in Database");
+            throw new ApiException(
+                'AUTHENTICATION_FAILED',
+                'Prijava ni uspela.',
+                401
+            );
         }
 
         return [
@@ -53,5 +81,4 @@ class Certificate
             'fingerprint' => $fingerprint
         ];
     }
-  
 }

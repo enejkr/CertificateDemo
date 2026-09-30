@@ -18,7 +18,6 @@ class RefreshToken
     {
         // Revoke all old refresh tokens
         // Current one refresh token per user
-
         $stmt = $this->pdo->prepare("
             UPDATE refresh_tokens
             SET revoked_at = NOW()
@@ -84,15 +83,19 @@ class RefreshToken
 
         // Is not in DB
         if ($result === false) {
-            throw new Exception(
-                "Refresh token is not in database"
+            throw new ApiException(
+                'INVALID_REFRESH_TOKEN',
+                'Refresh token ni veljaven.',
+                401
             );
         }
 
         // Is revoked
         if ($result['revoked_at'] !== null) {
-            throw new Exception(
-                "Refresh token is revoked"
+            throw new ApiException(
+                'INVALID_REFRESH_TOKEN',
+                'Refresh token ni veljaven.',
+                401
             );
         }
 
@@ -102,14 +105,16 @@ class RefreshToken
         );
 
         if ($expiresAt === false) {
-            throw new Exception(
+            throw new RuntimeException(
                 'Invalid refresh token expiration date'
             );
         }
 
         if ($expiresAt <= time()) {
-            throw new Exception(
-                "Refresh token expired at {$result['expires_at']}"
+            throw new ApiException(
+                'REFRESH_TOKEN_EXPIRED',
+                'Refresh token je potekel.',
+                401
             );
         }
 

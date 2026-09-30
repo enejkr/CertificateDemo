@@ -30,7 +30,7 @@ class JwToken
         $privateKey = file_get_contents($this->privateKeyPath);
 
         if ($privateKey === false) {
-            throw new Exception(
+            throw new RuntimeException(
                 'Private key ni mogoče prebrati.'
             );
         }
@@ -59,7 +59,7 @@ class JwToken
         $publicKey = file_get_contents($this->publicKeyPath);
 
         if ($publicKey === false) {
-            throw new Exception(
+            throw new RuntimeException(
                 'Public key ni mogoče prebrati.'
             );
         }
@@ -73,8 +73,10 @@ class JwToken
                 )
             );
         } catch (Exception $e) {
-            throw new Exception(
-                'JWT ni veljaven: ' . $e->getMessage()
+            throw new ApiException(
+                'INVALID_ACCESS_TOKEN',
+                'Access token ni veljaven.',
+                401
             );
         }
 
@@ -89,8 +91,10 @@ class JwToken
                 $payload['exp']
             )
         ) {
-            throw new Exception(
-                'JWT payload nima obveznih podatkov.'
+            throw new ApiException(
+                'INVALID_ACCESS_TOKEN',
+                'Access token ni veljaven.',
+                401
             );
         }
 

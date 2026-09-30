@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             //tokens
             saveTokens(
-                $result['access_token'],
-                $result['refresh_token']
+                $result['data']['access_token'],
+                $result['data']['refresh_token']
             );
 
             $message = 'Uspesna povezava.';
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $refreshToken
                 );
 
-                $accessToken = $result['access_token'];
+                $accessToken = $result['data']['access_token'];
             }
 
             $response = $client->connectViaAccessToken(
@@ -61,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $apiUrl
             );
             
-
             $message = json_encode(
                 $response,
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
