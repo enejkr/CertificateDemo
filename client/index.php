@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['connect'])) {
 
             //gain access and refresh tokens
-            $result = $client->connectViaCertificate($url);
+           $result = $client->connectViaCertificate($url);
 
             //tokens
             saveTokens(
@@ -29,7 +29,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $result['data']['refresh_token']
             );
 
-            $message = 'Uspesna povezava.';
+            $message =
+                "LOGIN USPEŠEN\n\n" .
+
+                "HTTP STATUS:\n" .
+                $result['http_code'] . "\n\n" .
+
+                "REQUEST HEADERS:\n" .
+                ($result['request_headers'] ?: '(ni podatka)') . "\n\n" .
+
+                "RESPONSE HEADERS:\n" .
+                $result['headers'] . "\n\n" .
+
+                "RESPONSE BODY:\n" .
+                $result['body'];
         }
 
         // access and refresh token api usage

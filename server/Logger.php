@@ -3,48 +3,101 @@
 class Logger
 {
     private string $logDir;
-    private string $logFile;
 
     public function __construct(
-        ?string $logDir = null,
-        string $logFileName = 'custom.log'
+        ?string $logDir = null
     ) {
         $this->logDir = $logDir ?? (__DIR__ . '/logs');
-        $this->logFile = $this->logDir . '/' . $logFileName;
 
         $this->createLogDirectory();
     }
 
-    /**
-     * Zapiše poljubne podatke v log datoteko.
-     *
-     * @param mixed  $data
-     * @param string $label
-     */
-    public function log($data, string $label = ''): void
-    {
+    /*
+      Zapiše podatke v log.
+     
+      Dovoljeni leveli:
+       - error
+       - info
+       - debug
+       - warning
+    
+      Privzeti level: debug
+     
+      error              -> error.log
+      info/debug/warning -> info.log
+    */
+      
+    public function log(
+        mixed $data,
+        string $level = 'debug'
+    ): void {
+        $level = strtolower(trim($level));
+
+
+
+        // Če level manjka, uporabi debug.
+        if (!$level) {
+            $level = 'debug';
+        }
+
         $timestamp = date('Y-m-d H:i:s');
 
+        
+         
+        // message ločimo od ostalih podatkov.
+        
+        $message = null;
+
+        if (is_array($data) && array_key_exists('message', $data)) {
+            $message = $data['message'];
+            unset($data['message']);
+        }
+
+        // formatiranje glavnega deka 
         $output = $this->formatValue($data);
 
-        $prefix = $label !== ''
-            ? " [$label]"
-            : '';
+        
+        // Dodaj message pred JSON.
+        if ($message !== null) {
+            $message = $this->formatValue($message);
+
+            $output =  $message . ' ' .  $output;
+        }
+
+
+        // make sure log is onlly one line 
+        $output = $this->singleLine($output);
+
+        $levelTag = strtoupper($level);
+
+        $logLine = sprintf(
+            '[%s] [%s] %s' . PHP_EOL,
+            $timestamp,
+            $levelTag,
+            $output
+        );
+
+        // ločimo kam gre kaj
+        $logFile = $level === 'error'
+            ? $this->logDir . '/error.log'
+            : $this->logDir . '/info.log';
 
         file_put_contents(
-            $this->logFile,
-            "[$timestamp]$prefix $output" . PHP_EOL,
+            $logFile,
+            $logLine,
             FILE_APPEND | LOCK_EX
         );
     }
 
-    /**
-     * Ustvari logs mapo, če še ne obstaja.
-     */
+    
+    // Ustvari logs mapo 
     private function createLogDirectory(): void
     {
         if (!is_dir($this->logDir)) {
-            if (!mkdir($this->logDir, 0777, true) && !is_dir($this->logDir)) {
+            if (
+                !mkdir($this->logDir, 0777, true)
+                && !is_dir($this->logDir)
+            ) {
                 throw new RuntimeException(
                     'Log mape ni mogoče ustvariti: ' . $this->logDir
                 );
@@ -52,10 +105,9 @@ class Logger
         }
     }
 
-    /**
-     * Formatira katerikoli PHP tip.
-     */
-    private function formatValue($value): string
+    
+    // Formatira katerikoli podatkovni tip.
+    private function formatValue(mixed $value): string
     {
         if ($value === null) {
             return 'null';
@@ -88,12 +140,8 @@ class Logger
         return '[UNKNOWN TYPE: ' . gettype($value) . ']';
     }
 
-    /**
-     * Formatira string.
-     *
-     * Če je string JSON, ga pretvori v lepši JSON.
-     * Če ni veljaven UTF-8, ga obravnava kot binary data.
-     */
+   
+    //Formatira string
     private function formatString(string $value): string
     {
         if ($value === '') {
@@ -107,8 +155,8 @@ class Logger
         $decoded = json_decode($value, true);
 
         if (
-            json_last_error() === JSON_ERROR_NONE &&
-            (is_array($decoded) || is_object($decoded))
+            json_last_error() === JSON_ERROR_NONE
+            && (is_array($decoded) || is_object($decoded))
         ) {
             return $this->formatValue($decoded);
         }
@@ -116,14 +164,11 @@ class Logger
         return $value;
     }
 
-    /**
-     * Formatira array kot pretty JSON.
-     */
+    // Formatira array v eno vrstico  
     private function formatArray(array $array): string
     {
         $json = json_encode(
             $array,
-            JSON_PRETTY_PRINT |
             JSON_UNESCAPED_UNICODE |
             JSON_UNESCAPED_SLASHES |
             JSON_PARTIAL_OUTPUT_ON_ERROR
@@ -136,14 +181,11 @@ class Logger
         return print_r($array, true);
     }
 
-    /**
-     * Formatira object kot pretty JSON.
-     */
+    // Formatira object kot enovrstični JSON.
     private function formatObject(object $object): string
     {
         $json = json_encode(
             $object,
-            JSON_PRETTY_PRINT |
             JSON_UNESCAPED_UNICODE |
             JSON_UNESCAPED_SLASHES |
             JSON_PARTIAL_OUTPUT_ON_ERROR
@@ -154,5 +196,18 @@ class Logger
         }
 
         return print_r($object, true);
+    }
+
+  
+    // last check for a one line log 
+    private function singleLine(string $value): string
+    {
+        $value = str_replace(
+            ["\r\n", "\r", "\n", "\t"],
+            [' ', ' ', ' ', ' '],
+            $value
+        );
+
+        return preg_replace('/\s+/', ' ', $value) ?? $value;
     }
 }
