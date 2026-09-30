@@ -318,8 +318,28 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
 
 ---
 
-# Napake 
+# Formar in standard odgovorov 
+## Uspešen request 
+{
+    "success": true,
+    "message": "Token uspešno osvežen.",
+    "data": {
+        "access_token": "...",
+        "refresh_token": "...",
+        "token_type": "Bearer",
+        "expires_in": 3600
+    }
+}
 
+## Napaka 
+{
+    "success": false,
+    "error": {
+        "code": "INVALID_ACCESS_TOKEN",
+        "message": "Access token ni veljaven."
+    }
+}
+## seznam error.code 
 | HTTP | `error.code` | Kje | Pomen |
 |---:|---|---|---|
 | 400 | `BAD_REQUEST` | endpoint | Zahteva je sintaktično/nepričakovano napačna |
