@@ -305,6 +305,8 @@ https://localhost:8443/
 - Apache
 - PHP
 - MySQL
+- firebase/JWT
+- monolog 
 
 oziroma samo XAMPP saj vse ostalo pride zraven XAMPP inštalacije
 
