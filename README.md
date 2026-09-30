@@ -320,6 +320,7 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
 
 # Formar in standard odgovorov 
 ## Uspešen request 
+```
 {
     "success": true,
     "message": "Token uspešno osvežen.",
@@ -330,8 +331,9 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
         "expires_in": 3600
     }
 }
-
+```
 ## Napaka 
+```
 {
     "success": false,
     "error": {
@@ -339,6 +341,7 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
         "message": "Access token ni veljaven."
     }
 }
+```
 ## seznam error.code 
 | HTTP | `error.code` | Kje | Pomen |
 |---:|---|---|---|
