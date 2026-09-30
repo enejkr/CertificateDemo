@@ -1,14 +1,21 @@
 <?php
 // služi kot skupna začetna nastavitev, ki se bo sprožila pred logiko apijev 
-
+// prav tako deluje kot centralni server error handaler 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/classes/ApiException.php';
+require_once __DIR__ . '/autoload.php';
 require_once __DIR__ . '/functions/apiHelper.php';
+require_once __DIR__ . '/functions/helper.php';
 require_once __DIR__ . '/Logger.php';
 
 $logger = new Logger();
 
+$config = parse_ini_file(
+    __DIR__ . '/config/config.ini',
+    true
+);
+
+// ob kakoršni koli php napaki sproži exeption ki ga polovi set_exception_handler
 set_error_handler(function (
     int $severity,
     string $message,
@@ -59,7 +66,40 @@ register_shutdown_function(function () use ($logger): void {
         'success' => false,
         'error' => [
             'code' => 'INTERNAL_SERVER_ERROR',
-            'message' => 'Prišlo je do notranje napake strežnika.'
+            'message' => 'INTERNAL_SERVER_ERROR'
         ]
     ]);
+});
+
+set_exception_handler(function (Throwable $e) use ($logger): void {
+
+    if ($e instanceof ApiException) {
+
+        $logger->log([
+            'error_code' => $e->getErrorCode(),
+            'message' => $e->getMessage(),
+            'status_code' => $e->getStatusCode(),
+        ], 'error');
+
+        apiError(
+            $e->getErrorCode(),
+            $e->getMessage(),
+            $e->getStatusCode()
+        );
+
+        return;
+    }
+
+    $logger->log([
+        'error_code' => 'INTERNAL_SERVER_ERROR',
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+    ], 'error');
+
+    apiError(
+        'INTERNAL_SERVER_ERROR',
+        'INTERNAL_SERVER_ERROR',
+        500
+    );
 });

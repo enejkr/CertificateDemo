@@ -2,117 +2,71 @@
 
 require_once __DIR__ . "/../../../bootstrap.php";
 
-try {
+$database = new Database();
+$pdo = $database->getConnection();
 
-    // classes 
-    require_once __DIR__ . "/../../../classes/Database.php";
-    require_once __DIR__ . "/../../../classes/RateLimiter.php";
-    require_once __DIR__ . "/../../../classes/Certificate.php";
-    require_once __DIR__ . "/../../../classes/Jwt.php";
-    require_once __DIR__ . "/../../../classes/RefreshToken.php";
+$certificate = new Certificate($pdo);
+$user = $certificate->verify();
 
-    $config = parse_ini_file(
-        __DIR__ . '/../../../config/config.ini',
-        true
-    );
+$rateLimiter = new RateLimiter($pdo);
+$rateLimit = $rateLimiter->check(
+    'login:user:' . $user['id'],
+    $config['login_limits']['attempts_count'],
+    $config['login_limits']['time_period']
+);
 
-
-    
-    $database = new Database();
-    $pdo = $database->getConnection();
-
-    $certificate = new Certificate($pdo);
-    $user = $certificate->verify();
-
-    $rateLimiter = new RateLimiter($pdo);
-    $rateLimit = $rateLimiter->check(
-        'login:user:' . $user['id'],
-        $config['login_limits']['attempts_count'],
-        $config['login_limits']['time_period']
-    );
-
-    if (!$rateLimit['allowed']) {
-        $logger -> log([
-            'user_id' => $user['id'], 
-            'username' => $user['username'],
-            'action' => 'login',
-            'message' => 'rate limit triggered'
-        ], 'warning');
-
-        header(
-            'Retry-After: ' . $rateLimit['retry_after']
-        );
-
-        apiError(
-            'RATE_LIMIT_EXCEEDED',
-            'Preveč zahtev. Poskusite ponovno čez ' . $rateLimit['retry_after'] . ' sekund.',
-            429
-        );
-    }
-
-    
-    $refreshTokenService = new RefreshToken(
-        $pdo,
-        $config['refresh_token']
-    );
-
-
-    $jwt = new Jwt(
-        __DIR__ . '/' . $config['keys']['private_key'],
-        __DIR__ . '/' . $config['keys']['public_key'],
-        $config['jwt']
-    );
-    ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
-
-    $accessToken = $jwt->createAccessToken($user);
-
-    ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
-
-    $refreshToken = $refreshTokenService->create($user['id']);
+if (!$rateLimit['allowed']) {
     $logger -> log([
-            'user_id' => $user['id'], 
-            'username' => $user['username'],
-            'action' => 'login',
-            'message' => 'user succesfully logged in using certificate'
-        ], 'info');
+        'user_id' => $user['id'], 
+        'username' => $user['username'],
+        'action' => 'login',
+        'message' => 'rate limit triggered'
+    ], 'warning');
 
-    apiSuccess(
-        [
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'token_type' => 'Bearer',
-            //'expires_in' => (int)$config['jwt']['expires_in'],
-            
-        ],
-        'succesfull login'
+    header(
+        'Retry-After: ' . $rateLimit['retry_after']
     );
 
-} catch (ApiException $e) {
-    $logger -> log([
-        'error_code' => $e->getErrorCode(), 
-        'message' => $e->getMessage(), 
-        'status_code' => $e->getStatusCode(), 
-        
-    ],'error');
-    // api users see this
     apiError(
-        $e->getErrorCode(),
-        $e->getMessage(),
-        $e->getStatusCode()
+        'RATE_LIMIT_EXCEEDED',
+        'Preveč zahtev. Poskusite ponovno čez ' . $rateLimit['retry_after'] . ' sekund.',
+        429
     );
-
-} catch (Throwable $e) { 
-    // internal log
-    $logger -> log([ 
-        'error' => $e->getMessage(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine(),
-        'message' => 'INTERNAL_SERVER_ERROR'
-    ],'error'); 
-    // api users see this 
-    apiError( 
-        'INTERNAL_SERVER_ERROR', 
-        'INTERNAL_SERVER_ERROR', 
-        500 
-    ); 
 }
+
+
+$refreshTokenService = new RefreshToken(
+    $pdo,
+    $config['refresh_token']
+);
+
+
+$jwt = new Jwt(
+    __DIR__ . '/' . $config['keys']['private_key'],
+    __DIR__ . '/' . $config['keys']['public_key'],
+    $config['jwt']
+);
+// ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
+
+$accessToken = $jwt->createAccessToken($user);
+
+// ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
+
+$refreshToken = $refreshTokenService->create($user['id']);
+$logger -> log([
+        'user_id' => $user['id'], 
+        'username' => $user['username'],
+        'action' => 'login',
+        'message' => 'user succesfully logged in using certificate'
+    ], 'info');
+
+apiSuccess(
+    [
+        'access_token' => $accessToken,
+        'refresh_token' => $refreshToken,
+        'token_type' => 'Bearer',
+        //'expires_in' => (int)$config['jwt']['expires_in'],
+        
+    ],
+    'succesfull login'
+);

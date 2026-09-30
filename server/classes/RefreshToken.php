@@ -121,7 +121,7 @@ class RefreshToken
         return [
             'is_valid' => true,
             'user_id' => (int)$result['user_id'],
-            'token_hash' => $result['token_hash']
+            'token_hash' => $result['token_hash'],
         ];
     }
 }
