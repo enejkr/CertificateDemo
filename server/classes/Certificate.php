@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . "/../../costume_log.php";
-
 class Certificate
 {
     private PDO $pdo;
@@ -49,25 +47,23 @@ class Certificate
         return $fingerprint;
     }
 
-    // returns a user name, id and fingerprit of a connecterd user 
+    // returns a client name, id and fingerprit of a connecterd client 
     public function verify()
     {
         $fingerprint = $this->getClientCertificateFingerprint();
         
-        customLog($fingerprint);
-
         $stmt = $this->pdo->prepare("
-            SELECT id, username
-            FROM users
+            SELECT id, client_name
+            FROM Clients
             WHERE certificate_fingerprint = ?
             LIMIT 1
         ");
 
         $stmt->execute([$fingerprint]);
 
-        $user = $stmt->fetch();
+        $client = $stmt->fetch();
 
-        if (!$user) {
+        if (!$client) {
             throw new ApiException(
                 'AUTHENTICATION_FAILED',
                 'Prijava ni uspela.',
@@ -76,8 +72,8 @@ class Certificate
         }
 
         return [
-            'id' => $user['id'],
-            'username' => $user['username'],
+            'id' => $client['id'],
+            'client_name' => $client['client_name'],
             'fingerprint' => $fingerprint
         ];
     }

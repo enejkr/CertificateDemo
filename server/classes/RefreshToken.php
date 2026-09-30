@@ -14,19 +14,19 @@ class RefreshToken
         $this->tokenBytes = (int)$config['token_bytes'];
     }
 
-    public function create($userId)
+    public function create($clientId)
     {
         // Revoke all old refresh tokens
-        // Current one refresh token per user
+        // Current one refresh token per client
         $stmt = $this->pdo->prepare("
             UPDATE refresh_tokens
             SET revoked_at = NOW()
-            WHERE user_id = ?
+            WHERE client_id = ?
             AND revoked_at IS NULL;
         ");
 
         $stmt->execute([
-            $userId,
+            $clientId,
         ]);
 
         // Create new refresh token
@@ -47,13 +47,13 @@ class RefreshToken
 
         $stmt = $this->pdo->prepare("
             INSERT INTO refresh_tokens
-                (user_id, token_hash, expires_at, created_at)
+                (client_id, token_hash, expires_at, created_at)
             VALUES
                 (?, ?, ?, NOW())
         ");
 
         $stmt->execute([
-            $userId,
+            $clientId,
             $tokenHash,
             $expiresAt
         ]);
@@ -69,9 +69,14 @@ class RefreshToken
         );
 
         $stmt = $this->pdo->prepare("
-            SELECT user_id, token_hash, expires_at, revoked_at
-            FROM refresh_tokens
-            WHERE token_hash = ?
+            SELECT
+                rt.client_id,
+                rt.expires_at,
+                rt.revoked_at,
+                c.client_name
+            FROM refresh_tokens rt
+            INNER JOIN clients c ON c.id = rt.client_id
+            WHERE rt.token_hash = ?
             LIMIT 1
         ");
 
@@ -120,8 +125,8 @@ class RefreshToken
 
         return [
             'is_valid' => true,
-            'user_id' => (int)$result['user_id'],
-            'token_hash' => $result['token_hash'],
+            'client_id' => (int)$result['client_id'],
+            'client_name' => $result['client_name']
         ];
     }
 }

@@ -6,19 +6,19 @@ $database = new Database();
 $pdo = $database->getConnection();
 
 $certificate = new Certificate($pdo);
-$user = $certificate->verify();
+$client = $certificate->verify();
 
 $rateLimiter = new RateLimiter($pdo);
 $rateLimit = $rateLimiter->check(
-    'login:user:' . $user['id'],
+    'login:client:' . $client['id'],
     $config['login_limits']['attempts_count'],
     $config['login_limits']['time_period']
 );
 
 if (!$rateLimit['allowed']) {
     $logger -> log([
-        'user_id' => $user['id'], 
-        'username' => $user['username'],
+        'client_id' => $client['id'], 
+        'client_name' => $client['client_name'],
         'action' => 'login',
         'message' => 'rate limit triggered'
     ], 'warning');
@@ -48,16 +48,17 @@ $jwt = new Jwt(
 );
 // ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
 
-$accessToken = $jwt->createAccessToken($user);
+$accessToken = $jwt->createAccessToken($client);
 
 // ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
 
-$refreshToken = $refreshTokenService->create($user['id']);
+$refreshToken = $refreshTokenService->create($client['id']);
 $logger -> log([
-        'user_id' => $user['id'], 
-        'username' => $user['username'],
+        'client_id' => $client['id'], 
+        'client_name' => $client['client_name'],
         'action' => 'login',
-        'message' => 'user succesfully logged in using certificate'
+        'authentication_method' => 'certificate',
+        'message' => 'client succesfully logged in using certificate'
     ], 'info');
 
 apiSuccess(

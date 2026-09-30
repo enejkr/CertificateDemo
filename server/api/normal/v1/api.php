@@ -16,21 +16,17 @@ $jwt = new Jwt(
     $config['jwt']
 );
 $data = $jwt->verifyJwt($accessToken);
-$logger -> log([
-    'data' => $data
-], 'debug');
-
 
 $rateLimit = $rateLimiter->check(
-    'general_api:user:' . $data['sub'],
+    'general_api:client:' . $data['sub'],
     $config['general_limit']['attempts_count'],
     $config['general_limit']['time_period']
 );
 
 if (!$rateLimit['allowed']) {
     $logger -> log([
-        'user_id' => $data['sub'], 
-        'username' => $data['username'],
+        'client_id' => $data['sub'], 
+        'client_name' => $data['client_name'],
         'action' => 'api call',
         'message' => 'rate limit triggered'
     ], 'warning');
@@ -47,8 +43,8 @@ if (!$rateLimit['allowed']) {
 }
 
 $logger -> log([
-        'user_id' => $data['sub'], 
-        'username' => $data['username'],
+        'client_id' => $data['sub'], 
+        'client_name' => $data['client_name'],
         'action' => 'api call',
         'message' => 'success'
     ], 'info');

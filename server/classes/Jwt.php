@@ -28,7 +28,7 @@ class Jwt
     
     // Ustvari access JWT .
 
-    public function createAccessToken($user): string
+    public function createAccessToken($client): string
     {
         $privateKey = file_get_contents($this->privateKeyPath);
 
@@ -46,8 +46,8 @@ class Jwt
         ];
 
         $payload = [
-            'sub' => (string)$user['id'],
-            'username' => $user['username'],
+            'sub' => (string)$client['id'],
+            'client_name' => $client['client_name'],
             'iat' => $now,
             'exp' => $now + $this->expiresIn,
         ];
@@ -135,7 +135,7 @@ class Jwt
             if (
                 !isset(
                     $payload['sub'],
-                    $payload['username'],
+                    $payload['client_name'],
                     $payload['iat'],
                     $payload['exp']
                 )

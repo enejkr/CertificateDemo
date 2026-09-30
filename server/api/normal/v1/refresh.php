@@ -15,15 +15,15 @@ $tokenData = $refreshTokenService->verify(
 
 $rateLimiter = new RateLimiter($pdo);
 $rateLimit = $rateLimiter->check(
-    'general_api:user:' . $tokenData['user_id'],
+    'general_api:client:' . $tokenData['client_id'],
     $config['general_limit']['attempts_count'],
     $config['general_limit']['time_period']
 );
 
 if (!$rateLimit['allowed']) {
     $logger -> log([
-        'user_id' => $tokenData['sub'], 
-        'username' => $tokenData['username'],
+        'client_id' => $tokenData['sub'], 
+        'client_name' => $tokenData['client_name'],
         'action' => 'refresh api call',
         'message' => 'rate limit triggered'
     ], 'warning');
@@ -40,19 +40,19 @@ if (!$rateLimit['allowed']) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT id, username
-    FROM users
+    SELECT id, client_name
+    FROM clients
     WHERE id = ?
     LIMIT 1
 ");
 
 $stmt->execute([
-    $tokenData['user_id']
+    $tokenData['client_id']
 ]);
 
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($user === false) {
+if ($client === false) {
     
     throw new ApiException(
         'AUTHENTICATION_FAILED',
@@ -68,13 +68,18 @@ $jwt = new Jwt(
 );
 
 $accessToken = $jwt->createAccessToken(
-    $user
+    $client
 );
 
 $newRefreshToken = $refreshTokenService->create(
-    $user['id']
+    $client['id']
 );
-
+$logger->log([
+    'client_id' => $client['id'],
+    'client_name' => $client['client_name'],
+    'action' => 'refresh',
+    'message' => 'access token successfully refreshed'
+], 'info');
 apiSuccess(
     [
         'access_token' => $accessToken,

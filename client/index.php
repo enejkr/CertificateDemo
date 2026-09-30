@@ -110,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <input
                 type="hidden"
-                name="username"
-                id="username"
+                name="client_name"
+                id="client_name"
             >
 
         </form>

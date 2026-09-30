@@ -5,18 +5,18 @@ class Client
     private string $CaCrtPath;
     private string $ClientCrtPath;
     private string $ClientKeyPath;
-    private ?string $Username;
+    private ?string $Client_name;
 
     public function __construct(
         string $CaCrtPath,
         string $ClientCrtPath,
         string $ClientKeyPath,
-        ?string $Username = null
+        ?string $Client_name = null
     ) {
         $this->CaCrtPath = $CaCrtPath;
         $this->ClientCrtPath = $ClientCrtPath;
         $this->ClientKeyPath = $ClientKeyPath;
-        $this->Username = $Username;
+        $this->Client_name = $Client_name;
     }
 
     private function executeCurl(

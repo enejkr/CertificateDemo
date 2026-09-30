@@ -3,49 +3,55 @@
 class Logger
 {
     private string $logDir;
+    private bool $production;
 
     public function __construct(
-        ?string $logDir = null
+        ?string $logDir = null,
+        bool $production = false
     ) {
         $this->logDir = $logDir ?? (__DIR__ . '/logs');
+        $this->production = $production;
 
         $this->createLogDirectory();
     }
 
     /*
       Zapiše podatke v log.
-     
+
       Dovoljeni leveli:
        - error
        - info
        - debug
        - warning
-    
+
       Privzeti level: debug
-     
+
       error              -> error.log
       info/debug/warning -> info.log
+
+      V production načinu se debug logi ne shranjujejo.
     */
-      
+
     public function log(
         mixed $data,
         string $level = 'debug'
     ): void {
         $level = strtolower(trim($level));
 
-
-
         // Če level manjka, uporabi debug.
         if (!$level) {
             $level = 'debug';
         }
 
+        // V production načinu ne shranjuj debug logov.
+        if ($this->production && $level === 'debug') {
+            return;
+        }
+
         $timestamp = date('Y-m-d H:i:s');
 
-        
-         
         // message ločimo od ostalih podatkov.
-        
+
         $message = null;
 
         if (is_array($data) && array_key_exists('message', $data)) {
@@ -56,24 +62,29 @@ class Logger
         // formatiranje glavnega deka 
         $output = $this->formatValue($data);
 
-        
         // Dodaj message pred JSON.
         if ($message !== null) {
             $message = $this->formatValue($message);
 
-            $output =  $message . ' ' .  $output;
+            $output = $message . ' ' . $output;
         }
-
 
         // make sure log is onlly one line 
         $output = $this->singleLine($output);
 
         $levelTag = strtoupper($level);
 
+        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+
+        $methodTag = $method !== null
+            ? '[' . strtoupper($method) . '] '
+            : '';
+
         $logLine = sprintf(
-            '[%s] [%s] %s' . PHP_EOL,
+            '[%s] [%s] %s%s' . PHP_EOL,
             $timestamp,
             $levelTag,
+            $methodTag,
             $output
         );
 
@@ -89,7 +100,7 @@ class Logger
         );
     }
 
-    
+
     // Ustvari logs mapo 
     private function createLogDirectory(): void
     {
@@ -105,7 +116,7 @@ class Logger
         }
     }
 
-    
+
     // Formatira katerikoli podatkovni tip.
     private function formatValue(mixed $value): string
     {
@@ -140,7 +151,7 @@ class Logger
         return '[UNKNOWN TYPE: ' . gettype($value) . ']';
     }
 
-   
+
     //Formatira string
     private function formatString(string $value): string
     {
@@ -198,7 +209,7 @@ class Logger
         return print_r($object, true);
     }
 
-  
+
     // last check for a one line log 
     private function singleLine(string $value): string
     {
