@@ -1,34 +1,28 @@
 <?php
 
-// classes 
-require_once __DIR__ . "/../../../classes/Database.php";
-require_once __DIR__ . "/../../../classes/RateLimiter.php";
-require_once __DIR__ . "/../../../classes/Certificate.php";
-require_once __DIR__ . "/../../../classes/Jwt.php";
-require_once __DIR__ . "/../../../classes/RefreshToken.php";
-require_once __DIR__ . "/../../../classes/ApiException.php";
-
-// helpers 
-require_once __DIR__ . "/../../../Logger.php";
-require_once __DIR__ . "/../../../functions/apiHelper.php";
-
-
-header('Content-Type: application/json');
-
-$config = parse_ini_file(
-    __DIR__ . '/../../../config/config.ini',
-    true
-);
+require_once __DIR__ . "/../../../bootstrap.php";
 
 try {
+
+    // classes 
+    require_once __DIR__ . "/../../../classes/Database.php";
+    require_once __DIR__ . "/../../../classes/RateLimiter.php";
+    require_once __DIR__ . "/../../../classes/Certificate.php";
+    require_once __DIR__ . "/../../../classes/Jwt.php";
+    require_once __DIR__ . "/../../../classes/RefreshToken.php";
+
+    $config = parse_ini_file(
+        __DIR__ . '/../../../config/config.ini',
+        true
+    );
+
+
     
     $database = new Database();
     $pdo = $database->getConnection();
 
     $certificate = new Certificate($pdo);
     $user = $certificate->verify();
-
-    $logger = new Logger();
 
     $rateLimiter = new RateLimiter($pdo);
     $rateLimit = $rateLimiter->check(
@@ -81,7 +75,7 @@ try {
             'action' => 'login',
             'message' => 'user succesfully logged in using certificate'
         ], 'info');
-        
+
     apiSuccess(
         [
             'access_token' => $accessToken,
@@ -90,22 +84,35 @@ try {
             //'expires_in' => (int)$config['jwt']['expires_in'],
             
         ],
-        'Prijava uspešna.'
+        'succesfull login'
     );
 
 } catch (ApiException $e) {
-
+    $logger -> log([
+        'error_code' => $e->getErrorCode(), 
+        'message' => $e->getMessage(), 
+        'status_code' => $e->getStatusCode(), 
+        
+    ],'error');
+    // api users see this
     apiError(
         $e->getErrorCode(),
         $e->getMessage(),
         $e->getStatusCode()
     );
 
-} catch (Throwable $e) {
-
-    apiError(
-        'INTERNAL_SERVER_ERROR',
-        'Prišlo je do notranje napake strežnika.',
-        500
-    );
+} catch (Throwable $e) { 
+    // internal log
+    $logger -> log([ 
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'message' => 'INTERNAL_SERVER_ERROR'
+    ],'error'); 
+    // api users see this 
+    apiError( 
+        'INTERNAL_SERVER_ERROR', 
+        'INTERNAL_SERVER_ERROR', 
+        500 
+    ); 
 }

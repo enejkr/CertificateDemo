@@ -1,5 +1,5 @@
 <?php
-
+// mabey some time extend this class for more info for internal logging
 class ApiException extends Exception
 {
     private int $statusCode;
