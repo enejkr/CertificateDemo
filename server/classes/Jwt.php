@@ -25,7 +25,7 @@ class Jwt
         }
     }
 
-    
+
     // Ustvari access JWT .
 
     public function createAccessToken($client): string
@@ -165,9 +165,9 @@ class Jwt
                 );
             }
 
-            
+
             // Preveri, da token ni iz prihodnosti. 
-            if ((int)$payload['iat'] > $now ) {
+            if ((int)$payload['iat'] > $now) {
                 throw new RuntimeException(
                     'Invalid iat.'
                 );
@@ -201,7 +201,6 @@ class Jwt
             }
 
             return $payload;
-
         } catch (Throwable $e) {
 
             throw new ApiException(
@@ -212,7 +211,7 @@ class Jwt
         }
     }
 
-    
+
     // Base64 encode.
     private function base64UrlEncode(string $data): string
     {

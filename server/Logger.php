@@ -181,8 +181,8 @@ class Logger
         $json = json_encode(
             $array,
             JSON_UNESCAPED_UNICODE |
-            JSON_UNESCAPED_SLASHES |
-            JSON_PARTIAL_OUTPUT_ON_ERROR
+                JSON_UNESCAPED_SLASHES |
+                JSON_PARTIAL_OUTPUT_ON_ERROR
         );
 
         if ($json !== false) {
@@ -198,8 +198,8 @@ class Logger
         $json = json_encode(
             $object,
             JSON_UNESCAPED_UNICODE |
-            JSON_UNESCAPED_SLASHES |
-            JSON_PARTIAL_OUTPUT_ON_ERROR
+                JSON_UNESCAPED_SLASHES |
+                JSON_PARTIAL_OUTPUT_ON_ERROR
         );
 
         if ($json !== false) {

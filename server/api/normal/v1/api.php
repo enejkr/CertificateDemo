@@ -24,8 +24,8 @@ $rateLimit = $rateLimiter->check(
 );
 
 if (!$rateLimit['allowed']) {
-    $logger -> log([
-        'client_id' => $data['client_id'], 
+    $logger->log([
+        'client_id' => $data['client_id'],
         'client_name' => $data['client_name'],
         'action' => 'api call',
         'message' => 'rate limit triggered'
@@ -42,12 +42,12 @@ if (!$rateLimit['allowed']) {
     );
 }
 
-$logger -> log([
-        'client_id' => $data['client_id'], 
-        'client_name' => $data['client_name'],
-        'action' => 'api call',
-        'message' => 'success'
-    ], 'info');
+$logger->log([
+    'client_id' => $data['client_id'],
+    'client_name' => $data['client_name'],
+    'action' => 'api call',
+    'message' => 'success'
+], 'info');
 
 apiSuccess(
     [

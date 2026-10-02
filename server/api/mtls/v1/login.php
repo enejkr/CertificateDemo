@@ -16,8 +16,8 @@ $rateLimit = $rateLimiter->check(
 );
 
 if (!$rateLimit['allowed']) {
-    $logger -> log([
-        'client_id' => $client['id'], 
+    $logger->log([
+        'client_id' => $client['id'],
         'client_name' => $client['client_name'],
         'action' => 'login',
         'message' => 'rate limit triggered'
@@ -54,13 +54,13 @@ $accessToken = $jwt->createAccessToken($client);
 
 $refreshToken = $refreshTokenService->create($client['id']);
 
-$logger -> log([
-        'client_id' => $client['id'], 
-        'client_name' => $client['client_name'],
-        'action' => 'login',
-        'authentication_method' => 'certificate',
-        'message' => 'client succesfully logged in using certificate'
-    ], 'info');
+$logger->log([
+    'client_id' => $client['id'],
+    'client_name' => $client['client_name'],
+    'action' => 'login',
+    'authentication_method' => 'certificate',
+    'message' => 'client succesfully logged in using certificate'
+], 'info');
 
 apiSuccess(
     [
@@ -68,7 +68,7 @@ apiSuccess(
         'refresh_token' => $refreshToken,
         'token_type' => 'Bearer',
         //'expires_in' => (int)$config['jwt']['expires_in'],
-        
+
     ],
     'Successful login'
 );

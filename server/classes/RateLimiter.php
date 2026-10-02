@@ -109,7 +109,6 @@ class RateLimiter
                 'allowed' => true,
                 'retry_after' => $retryAfter
             ];
-
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();

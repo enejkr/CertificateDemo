@@ -21,8 +21,8 @@ $rateLimit = $rateLimiter->check(
 );
 
 if (!$rateLimit['allowed']) {
-    $logger -> log([
-        'client_id' => $tokenData['client_id'], 
+    $logger->log([
+        'client_id' => $tokenData['client_id'],
         'client_name' => $tokenData['client_name'],
         'action' => 'refresh api call',
         'message' => 'rate limit triggered'
@@ -53,7 +53,7 @@ $stmt->execute([
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($client === false) {
-    
+
     throw new ApiException(
         'AUTHENTICATION_FAILED',
         'Authentication failed.',

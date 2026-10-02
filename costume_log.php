@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Zapiše poljubne podatke v custom log datoteko.
  *
@@ -134,9 +135,9 @@ function formatArray(array $array): string
     $json = json_encode(
         $array,
         JSON_PRETTY_PRINT |
-        JSON_UNESCAPED_UNICODE |
-        JSON_UNESCAPED_SLASHES |
-        JSON_PARTIAL_OUTPUT_ON_ERROR
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_PARTIAL_OUTPUT_ON_ERROR
     );
 
     if ($json !== false) {
@@ -154,9 +155,9 @@ function formatObject(object $object): string
     $json = json_encode(
         $object,
         JSON_PRETTY_PRINT |
-        JSON_UNESCAPED_UNICODE |
-        JSON_UNESCAPED_SLASHES |
-        JSON_PARTIAL_OUTPUT_ON_ERROR
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_PARTIAL_OUTPUT_ON_ERROR
     );
 
     if ($json !== false) {
