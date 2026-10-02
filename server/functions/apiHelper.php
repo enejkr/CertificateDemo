@@ -13,6 +13,7 @@ function apiSuccess(array $data = [], string $message = 'OK', int $statusCode = 
     exit;
 }
 
+// old 
 function apiError(
     string $errorCode,
     string $message,
