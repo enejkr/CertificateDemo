@@ -1,6 +1,7 @@
 <?php
-// služi kot skupna začetna nastavitev, ki se bo sprožila pred logiko apijev 
-// prav tako deluje kot centralni server error handaler 
+// Skupna začetna nastavitev za API endpointe.
+// Inicializira potrebne dependencyje, konfiguracijo in centralno
+// obravnavo napak ter se izvede pred API logiko.
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/autoload.php';
@@ -15,7 +16,7 @@ $config = parse_ini_file(
     true
 );
 
-// ob kakoršni koli php napaki sproži exeption ki ga polovi set_exception_handler
+// napake ki jih je mogoče prestreči pretvori v ErrorException 
 set_error_handler(function (
     int $severity,
     string $message,
@@ -30,7 +31,8 @@ set_error_handler(function (
         $line
     );
 });
-
+// Prestrezanje fatalnih napak, ki jih set_error_handler()
+// ne more obravnavati.
 register_shutdown_function(function () use ($logger): void {
 
     $error = error_get_last();
@@ -70,7 +72,9 @@ register_shutdown_function(function () use ($logger): void {
         ]
     ]);
 });
-
+// obravnava vsako napako 
+// ApiException vrne kot struktoriran error 
+// ostalo vrne kot INTERNALSERVER ERROR 
 set_exception_handler(function (Throwable $e) use ($logger): void {
 
     if ($e instanceof ApiException) {

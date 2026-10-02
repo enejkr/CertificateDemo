@@ -22,7 +22,7 @@ $rateLimit = $rateLimiter->check(
 
 if (!$rateLimit['allowed']) {
     $logger -> log([
-        'client_id' => $tokenData['sub'], 
+        'client_id' => $tokenData['client_id'], 
         'client_name' => $tokenData['client_name'],
         'action' => 'refresh api call',
         'message' => 'rate limit triggered'
@@ -32,7 +32,7 @@ if (!$rateLimit['allowed']) {
         'Retry-After: ' . $rateLimit['retry_after']
     );
 
-    apiError(
+    throw new ApiException(
         'RATE_LIMIT_EXCEEDED',
         'RATE_LIMIT_EXCEEDED',
         429

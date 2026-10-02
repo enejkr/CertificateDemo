@@ -46,7 +46,7 @@ class Jwt
         ];
 
         $payload = [
-            'sub' => (string)$client['id'],
+            'client_id' => (string)$client['id'],
             'client_name' => $client['client_name'],
             'iat' => $now,
             'exp' => $now + $this->expiresIn,
@@ -134,7 +134,7 @@ class Jwt
 
             if (
                 !isset(
-                    $payload['sub'],
+                    $payload['client_id'],
                     $payload['client_name'],
                     $payload['iat'],
                     $payload['exp']

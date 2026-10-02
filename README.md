@@ -344,6 +344,9 @@ Tabela `users` vsebuje uporabnika in fingerprint njegovega client certifikata.
 }
 ```
 ## seznam error.code 
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
+
+
 | HTTP | `error.code` | Kje | Pomen |
 |---:|---|---|---|
 | 400 | `BAD_REQUEST` | endpoint | Zahteva je sintaktično/nepričakovano napačna |

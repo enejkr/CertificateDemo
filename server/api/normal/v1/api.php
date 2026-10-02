@@ -6,8 +6,6 @@ require_once __DIR__ . "/../../../bootstrap.php";
 $database = new Database();
 $pdo = $database->getConnection();
 
-$rateLimiter = new RateLimiter($pdo);
-
 $accessToken = extractToken();
 
 $jwt = new Jwt(
@@ -17,15 +15,17 @@ $jwt = new Jwt(
 );
 $data = $jwt->verifyJwt($accessToken);
 
+
+$rateLimiter = new RateLimiter($pdo);
 $rateLimit = $rateLimiter->check(
-    'general_api:client:' . $data['sub'],
+    'general_api:client:' . $data['client_id'],
     $config['general_limit']['attempts_count'],
     $config['general_limit']['time_period']
 );
 
 if (!$rateLimit['allowed']) {
     $logger -> log([
-        'client_id' => $data['sub'], 
+        'client_id' => $data['client_id'], 
         'client_name' => $data['client_name'],
         'action' => 'api call',
         'message' => 'rate limit triggered'
@@ -35,7 +35,7 @@ if (!$rateLimit['allowed']) {
         'Retry-After: ' . $rateLimit['retry_after']
     );
 
-    apiError(
+    throw new ApiException(
         'RATE_LIMIT_EXCEEDED',
         'RATE_LIMIT_EXCEEDED',
         429
@@ -43,7 +43,7 @@ if (!$rateLimit['allowed']) {
 }
 
 $logger -> log([
-        'client_id' => $data['sub'], 
+        'client_id' => $data['client_id'], 
         'client_name' => $data['client_name'],
         'action' => 'api call',
         'message' => 'success'

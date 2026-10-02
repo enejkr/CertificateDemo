@@ -27,9 +27,9 @@ if (!$rateLimit['allowed']) {
         'Retry-After: ' . $rateLimit['retry_after']
     );
 
-    apiError(
+    throw new ApiException(
         'RATE_LIMIT_EXCEEDED',
-        'Too many requests. Please try again in ' . $rateLimit['retry_after'] . ' seconds.',
+        'RATE_LIMIT_EXCEEDED',
         429
     );
 }
@@ -42,8 +42,8 @@ $refreshTokenService = new RefreshToken(
 
 
 $jwt = new Jwt(
-    __DIR__ . '/' . $config['keys']['private_key'],
-    __DIR__ . '/' . $config['keys']['public_key'],
+    $config['keys']['private_key'],
+    $config['keys']['public_key'],
     $config['jwt']
 );
 // ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
@@ -53,6 +53,7 @@ $accessToken = $jwt->createAccessToken($client);
 // ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
 
 $refreshToken = $refreshTokenService->create($client['id']);
+
 $logger -> log([
         'client_id' => $client['id'], 
         'client_name' => $client['client_name'],
