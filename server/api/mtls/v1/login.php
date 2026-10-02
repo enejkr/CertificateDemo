@@ -46,11 +46,11 @@ $jwt = new Jwt(
     $config['keys']['public_key'],
     $config['jwt']
 );
-// ////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
+//////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
 
 $accessToken = $jwt->createAccessToken($client);
 
-// ////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
+//////////////// IZDAJA REFRESH TOKENA \\\\\\\\\\\\\\\
 
 $refreshToken = $refreshTokenService->create($client['id']);
 
@@ -61,6 +61,11 @@ $logger->log([
     'authentication_method' => 'certificate',
     'message' => 'client succesfully logged in using certificate'
 ], 'info');
+
+header(
+    'Access-Token-Exp: ' . (int)$config['jwt']['expires_in'],
+    'Refresh-Token-Exp: ' . (int)$config['refresh_token']['expires_in']
+);
 
 apiSuccess(
     [

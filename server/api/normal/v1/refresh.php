@@ -80,6 +80,10 @@ $logger->log([
     'action' => 'refresh',
     'message' => 'access token successfully refreshed'
 ], 'info');
+header(
+    'Access-Token-Exp: ' . (int)$config['jwt']['expires_in'],
+    'Refresh-Token-Exp: ' . (int)$config['refresh_token']['expires_in']
+);
 apiSuccess(
     [
         'access_token' => $accessToken,
