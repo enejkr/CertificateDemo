@@ -62,8 +62,8 @@ if ($client === false) {
 }
 
 $jwt = new Jwt(
-    __DIR__ . '/' . $config['keys']['private_key'],
-    __DIR__ . '/' . $config['keys']['public_key'],
+    $privateKey,
+    $publicKey,
     $config['jwt']
 );
 
