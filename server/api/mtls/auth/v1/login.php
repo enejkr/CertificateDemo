@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/../../../bootstrap.php";
+require_once __DIR__ . "/../../../../bootstrap.php";
 
 $database = new Database();
 $pdo = $database->getConnection();
@@ -42,8 +42,8 @@ $refreshTokenService = new RefreshToken(
 
 
 $jwt = new Jwt(
-    $config['keys']['private_key'],
-    $config['keys']['public_key'],
+    $privateKey,
+    $publicKey,
     $config['jwt']
 );
 //////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\

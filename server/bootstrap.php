@@ -16,6 +16,10 @@ $config = parse_ini_file(
     true
 );
 
+// loads private and public jwt keys 
+$privateKey = realpath(__DIR__ . $config['keys']['private_key']);
+$publicKey  = realpath(__DIR__ . $config['keys']['public_key']);
+
 // napake ki jih je mogoče prestreči pretvori v ErrorException 
 set_error_handler(function (
     int $severity,

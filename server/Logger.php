@@ -17,13 +17,6 @@ class Logger
 
     /*
       Zapiše podatke v log.
-
-      Dovoljeni leveli:
-       - error
-       - info
-       - debug
-       - warning
-
       Privzeti level: debug
 
       error              -> error.log

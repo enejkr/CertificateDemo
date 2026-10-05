@@ -9,8 +9,8 @@ $pdo = $database->getConnection();
 $accessToken = extractToken();
 
 $jwt = new Jwt(
-    $config['keys']['private_key'],
-    $config['keys']['public_key'],
+    $privateKey,
+    $publicKey,
     $config['jwt']
 );
 $data = $jwt->verifyJwt($accessToken);

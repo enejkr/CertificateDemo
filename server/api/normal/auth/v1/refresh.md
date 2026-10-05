@@ -1,35 +1,26 @@
-# Api.php
+# Refresh Token
 
 ## Description
 
-API endpoint za preverjanje veljavnosti Access Tokena in preverjanje omejitve števila zahtev (rate limit).
+API endpoint za osvežitev Access Tokena z uporabo veljavnega Refresh Tokena.
 
-Endpoint iz JWT Access Tokena pridobi podatke o klientu (`client_id` in `client_name`), nato preveri, ali je klient presegel dovoljeno število zahtev v določenem časovnem obdobju.
-
-Če je zahteva uspešna, API vrne potrjen Access Token.
+Ob uspešni zahtevi API preveri Refresh Token, preveri rate limit klienta, preveri obstoj klienta v podatkovni bazi ter ustvari nov Access Token in nov Refresh Token.
 
 ## URL and Method
 
-**[GET]** `https://localhost:8443/api/v1/api`
+**[POST]** `https://localhost:8443/api/v1/refresh`
 
 ## Authentication
 
-Endpoint zahteva veljaven **Bearer Access Token**.
+Endpoint zahteva veljaven **Refresh Token**.
 
 Header:
 
 ```http
-Authorization: Bearer <access_token>
+Authorization: Bearer <refresh_token>
 ```
 
-Access Token mora biti veljaven in vsebovati podatke:
-
-```json
-{
-  "client_id": "...",
-  "client_name": "..."
-}
-```
+Refresh Token se preveri pred izvedbo nadaljnjih operacij.
 
 ## Successful response
 
@@ -38,18 +29,23 @@ HTTP Status **200**
 ```json
 {
   "success": true,
-  "message": "Successful connection",
+  "message": "Token successfully refreshed.",
   "data": {
-    "access_token": "eyJhbGciOi..."
+    "access_token": "eyJhbGciOi...",
+    "refresh_token": "d8f7c1...",
+    "token_type": "Bearer",
+    "expires_in": 3600
   }
 }
 ```
+
+`expires_in` predstavlja čas veljavnosti novega Access Tokena v sekundah.
 
 ## Error handling
 
 ### 401 Unauthorised
 
-Če Access Token ni veljaven oziroma ga ni mogoče uspešno preveriti.
+Če Refresh Token ni veljaven, ni mogoče uspešno preveriti njegove veljavnosti ali klient ne obstaja v podatkovni bazi.
 
 Response:
 
