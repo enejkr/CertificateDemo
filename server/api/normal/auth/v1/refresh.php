@@ -74,12 +74,14 @@ $accessToken = $jwt->createAccessToken(
 $newRefreshToken = $refreshTokenService->create(
     $client['id']
 );
+
 $logger->log([
     'client_id' => $client['id'],
     'client_name' => $client['client_name'],
     'action' => 'refresh',
     'message' => 'access token successfully refreshed'
 ], 'info');
+
 header(
     'Access-Token-Exp: ' . (int)$config['jwt']['expires_in']
 );
@@ -87,6 +89,7 @@ header(
 header(
     'Refresh-Token-Exp: ' . (int)$config['refresh_token']['expires_in']
 );
+
 apiSuccess(
     [
         'access_token' => $accessToken,

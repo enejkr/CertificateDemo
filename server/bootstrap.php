@@ -12,7 +12,7 @@ require_once __DIR__ . '/Logger.php';
 $logger = new Logger();
 
 $config = parse_ini_file(
-    __DIR__ . '/config/config.ini',
+    __DIR__ . '/config/confwig.ini',
     true
 );
 

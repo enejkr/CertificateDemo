@@ -1,5 +1,6 @@
 <?php
-
+// preveri kako je z sočasnimi dostopi 
+// transaction in lahko row zakleneš
 class Database
 {
     private PDO $pdo;

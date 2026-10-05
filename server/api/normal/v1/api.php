@@ -1,12 +1,12 @@
 <?php
 require_once __DIR__ . "/../../../bootstrap.php";
 
-
-
 $database = new Database();
 $pdo = $database->getConnection();
 
 $accessToken = extractToken();
+// dodaj client id ko obvezen. 
+
 
 $jwt = new Jwt(
     $privateKey,
