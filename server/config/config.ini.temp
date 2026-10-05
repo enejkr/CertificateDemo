@@ -1,25 +1,27 @@
 [database]
-db_host = 
-db_name = 
-db_user = 
+db_host = localhost
+db_name = mtls_demo
+db_user = root
 db_password =
 
 [jwt]
-algorithm = 
-expires_in = 
+algorithm = RS256
+expires_in = 5
 
 [refresh_token]
-expires_in = 
-token_bytes = 
+expires_in = 2592000
+token_bytes = 32
 
 [keys]
 private_key = 
 public_key = 
 
+login je umejen po user 
 [login_limits]
-attempts_count =  
-time_period = 
+attempts_count = 5 
+time_period = 60
 
+ostalo ima eno skupno limitirano po user 
 [general_limit]
-attempts_count = 
-time_period = 
+attempts_count = 60
+time_period = 60

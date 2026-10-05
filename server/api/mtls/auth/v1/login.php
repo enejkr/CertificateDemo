@@ -46,6 +46,7 @@ $jwt = new Jwt(
     $publicKey,
     $config['jwt']
 );
+
 //////////////// IZDAJA ACCESS TOKENA \\\\\\\\\\\\\\\
 
 $accessToken = $jwt->createAccessToken($client);
