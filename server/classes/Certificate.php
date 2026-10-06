@@ -54,7 +54,7 @@ class Certificate
 
         $stmt = $this->pdo->prepare("
             SELECT id, client_name
-            FROM Clients
+            FROM clients
             WHERE certificate_fingerprint = ?
             LIMIT 1
         ");

@@ -9,14 +9,17 @@ require_once __DIR__ . '/functions/apiHelper.php';
 require_once __DIR__ . '/functions/helper.php';
 require_once __DIR__ . '/Logger.php';
 
-$logger = new Logger();
+
 
 $config = parse_ini_file(
     __DIR__ . '/config/confwig.ini',
     true
 );
 
-// loads private and public jwt keys 
+$logger = new Logger(
+    logDir: $config['logger']['log_dir'] ?? '',
+    production: (bool)($config['logger']['production'] ?? false)
+); // loads private and public jwt keys 
 $privateKey = realpath(__DIR__ . $config['keys']['private_key']);
 $publicKey  = realpath(__DIR__ . $config['keys']['public_key']);
 
